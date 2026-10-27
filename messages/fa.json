@@ -1,0 +1,58 @@
+{
+  "common": {
+    "appName": "سامانه پایه",
+    "brandMark": "پ",
+    "otherLanguage": "English",
+    "switchLanguage": "تغییر زبان",
+    "toggleTheme": "تغییر تم",
+    "openMenu": "باز کردن منو",
+    "collapseSidebar": "جمع کردن منوی کناری",
+    "expandSidebar": "باز کردن منوی کناری",
+    "menuTitle": "منوی اصلی",
+    "menuDescription": "پیمایش بین بخش‌های سامانه",
+    "skipToContent": "پرش به محتوای اصلی",
+    "logout": "خروج",
+    "home": "خانه",
+    "breadcrumb": "مسیر صفحه"
+  },
+  "nav": {
+    "label": "پیمایش اصلی",
+    "sections": {
+      "main": "اصلی",
+      "management": "مدیریت"
+    },
+    "items": {
+      "dashboard": "داشبورد",
+      "users": "کاربران",
+      "sessions": "نشست‌ها"
+    },
+    "placeholder": "این صفحه در مراحل بعد ساخته می‌شود."
+  },
+  "user": {
+    "menu": "منوی کاربر",
+    "initials": "مد",
+    "demoName": "مدیر سامانه",
+    "demoRole": "دسترسی کامل"
+  },
+  "footer": {
+    "rights": "© {year} {name}. تمامی حقوق محفوظ است."
+  },
+  "dashboard": {
+    "title": "نمای کلی",
+    "description": "خلاصه‌ای از وضعیت سامانه",
+    "sampleNotice": "داده‌های این صفحه نمونه است و بعد از اتصال به API جایگزین می‌شود.",
+    "stats": {
+      "totalUsers": "کل کاربران",
+      "activeSessions": "نشست‌های فعال",
+      "roles": "نقش‌ها",
+      "failedLogins": "ورودهای ناموفق"
+    },
+    "vsLastWeek": "نسبت به هفته قبل",
+    "recent": {
+      "title": "آخرین ورودها",
+      "description": "تازه‌ترین تلاش‌ها برای ورود به سامانه",
+      "success": "موفق",
+      "failed": "ناموفق"
+    }
+  }
+}

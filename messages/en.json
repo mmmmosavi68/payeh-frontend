@@ -1,0 +1,58 @@
+{
+  "common": {
+    "appName": "Payeh System",
+    "brandMark": "P",
+    "otherLanguage": "فارسی",
+    "switchLanguage": "Switch language",
+    "toggleTheme": "Toggle theme",
+    "openMenu": "Open menu",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "menuTitle": "Main menu",
+    "menuDescription": "Navigate between sections of the system",
+    "skipToContent": "Skip to main content",
+    "logout": "Logout",
+    "home": "Home",
+    "breadcrumb": "Breadcrumb"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "sections": {
+      "main": "Main",
+      "management": "Management"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "sessions": "Sessions"
+    },
+    "placeholder": "This page will be built in a later step."
+  },
+  "user": {
+    "menu": "User menu",
+    "initials": "AD",
+    "demoName": "Administrator",
+    "demoRole": "Full access"
+  },
+  "footer": {
+    "rights": "© {year} {name}. All rights reserved."
+  },
+  "dashboard": {
+    "title": "Overview",
+    "description": "A summary of the system status",
+    "sampleNotice": "The data on this page is sample data and will be replaced once the API is connected.",
+    "stats": {
+      "totalUsers": "Total users",
+      "activeSessions": "Active sessions",
+      "roles": "Roles",
+      "failedLogins": "Failed sign-ins"
+    },
+    "vsLastWeek": "vs last week",
+    "recent": {
+      "title": "Recent sign-ins",
+      "description": "Latest attempts to sign in to the system",
+      "success": "Success",
+      "failed": "Failed"
+    }
+  }
+}
