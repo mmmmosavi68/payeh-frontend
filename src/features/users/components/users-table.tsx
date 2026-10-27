@@ -1,0 +1,522 @@
+"use client";
+
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Ellipsis,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { EmptyState, ErrorState } from "@/components/shared/data-states";
+import { SampleNotice } from "@/components/shared/sample-notice";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useRemoteData } from "@/hooks/use-remote-data";
+import { localeDirections } from "@/i18n/routing";
+import { deleteUser, listUsers } from "@/lib/mock/users";
+import { cn } from "@/lib/utils";
+import type { UserQuery, UserRecord } from "@/types/user";
+import { UserFormDialog } from "./user-form-dialog";
+
+const PAGE_SIZE = 10;
+
+type SortKey = UserQuery["sort"];
+type SortDir = UserQuery["dir"];
+
+function initials(user: UserRecord) {
+  return `${Array.from(user.firstName)[0] ?? ""}${Array.from(user.lastName)[0] ?? ""}`;
+}
+
+function StatusBadge({ active }: { active: boolean }) {
+  const t = useTranslations("users.status");
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+        active
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : "bg-muted text-muted-foreground",
+      )}
+    >
+      {active ? t("active") : t("inactive")}
+    </span>
+  );
+}
+
+function RoleBadges({ roles }: { roles: UserRecord["roles"] }) {
+  const t = useTranslations("roles");
+  return (
+    <div className="flex flex-wrap gap-1">
+      {roles.map((role) => (
+        <Badge key={role} variant="secondary">
+          {t(role)}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function UserCell({ user }: { user: UserRecord }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-full border bg-muted text-xs font-medium">
+        {initials(user)}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">
+          {user.firstName} {user.lastName}
+        </p>
+        <p className="truncate text-xs text-muted-foreground" dir="ltr">
+          {user.username}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+type RowActionsProps = {
+  user: UserRecord;
+  dir: "rtl" | "ltr";
+  onEdit: () => void;
+  onDelete: () => void;
+};
+
+function RowActions({ user, dir, onEdit, onDelete }: RowActionsProps) {
+  const t = useTranslations("common");
+
+  return (
+    <DropdownMenu dir={dir}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-full"
+          aria-label={`${t("actions")}: ${user.firstName} ${user.lastName}`}
+        >
+          <Ellipsis className="size-4" aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onEdit}>
+          <Pencil className="size-4" aria-hidden />
+          {t("edit")}
+        </DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+          <Trash2 className="size-4" aria-hidden />
+          {t("delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+type SortHeadProps = {
+  label: string;
+  active: boolean;
+  dir: SortDir;
+  onClick: () => void;
+};
+
+function SortHead({ label, active, dir, onClick }: SortHeadProps) {
+  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+    >
+      {label}
+      <Icon className="size-3.5" aria-hidden />
+    </button>
+  );
+}
+
+export function UsersTable() {
+  const t = useTranslations("users");
+  const tc = useTranslations("common");
+  const format = useFormatter();
+  const locale = useLocale();
+  const dir = localeDirections[locale] ?? "ltr";
+
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebouncedValue(searchInput, 300);
+  const [status, setStatus] = useState<UserQuery["status"]>("all");
+  const [sort, setSort] = useState<SortKey>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [formUser, setFormUser] = useState<UserRecord | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
+
+  const query = useMemo<UserQuery>(
+    () => ({ page, pageSize: PAGE_SIZE, search, status, sort, dir: sortDir }),
+    [page, search, status, sort, sortDir],
+  );
+
+  const { data, failed, loading, reload } = useRemoteData(
+    JSON.stringify(query),
+    () => listUsers(query),
+  );
+
+  const hasFilters = searchInput !== "" || status !== "all";
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
+
+  function toggleSort(key: SortKey) {
+    if (sort === key) {
+      setSortDir((value) => (value === "asc" ? "desc" : "asc"));
+    } else {
+      setSort(key);
+      setSortDir(key === "createdAt" ? "desc" : "asc");
+    }
+    setPage(1);
+  }
+
+  function openCreate() {
+    setFormUser(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(user: UserRecord) {
+    setFormUser(user);
+    setFormOpen(true);
+  }
+
+  function openDelete(user: UserRecord) {
+    setDeleteTarget(user);
+    setDeleteOpen(true);
+  }
+
+  function clearFilters() {
+    setSearchInput("");
+    setStatus("all");
+    setPage(1);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    await deleteUser(deleteTarget.id);
+    toast.success(t("toast.deleted"));
+    if (data && data.items.length === 1 && page > 1) setPage(page - 1);
+    reload();
+  }
+
+  const showSkeleton = !data && !failed;
+  const formatDate = (iso: string) =>
+    format.dateTime(new Date(iso), { dateStyle: "medium" });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SampleNotice />
+
+      <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search
+            className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={(event) => {
+              setSearchInput(event.target.value);
+              setPage(1);
+            }}
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchPlaceholder")}
+            className="h-9 ps-9"
+          />
+        </div>
+
+        <Select
+          dir={dir}
+          value={status}
+          onValueChange={(value) => {
+            setStatus(value as UserQuery["status"]);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger
+            className="w-full sm:w-44"
+            aria-label={t("filters.status")}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filters.all")}</SelectItem>
+            <SelectItem value="active">{t("filters.active")}</SelectItem>
+            <SelectItem value="inactive">{t("filters.inactive")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button className="rounded-full" onClick={openCreate}>
+          <Plus className="size-4" aria-hidden />
+          {t("add")}
+        </Button>
+      </div>
+
+      {failed ? (
+        <ErrorState
+          title={t("error.title")}
+          description={t("error.description")}
+          onRetry={reload}
+        />
+      ) : data && data.total === 0 ? (
+        <EmptyState
+          icon={<Users className="size-5" aria-hidden />}
+          title={t("empty.title")}
+          description={t("empty.description")}
+          action={
+            hasFilters ? (
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={clearFilters}
+              >
+                {t("empty.clear")}
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div
+            aria-busy={loading}
+            className={cn(
+              "hidden overflow-hidden rounded-2xl border bg-card transition-opacity md:block",
+              loading && data && "opacity-60",
+            )}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    aria-sort={
+                      sort === "name"
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <SortHead
+                      label={t("columns.user")}
+                      active={sort === "name"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("name")}
+                    />
+                  </TableHead>
+                  <TableHead>{t("columns.phone")}</TableHead>
+                  <TableHead>{t("columns.roles")}</TableHead>
+                  <TableHead>{t("columns.status")}</TableHead>
+                  <TableHead
+                    aria-sort={
+                      sort === "createdAt"
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <SortHead
+                      label={t("columns.createdAt")}
+                      active={sort === "createdAt"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("createdAt")}
+                    />
+                  </TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">{t("columns.actions")}</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {showSkeleton
+                  ? Array.from({ length: 5 }, (_, index) => (
+                      <TableRow key={index}>
+                        {Array.from({ length: 6 }, (_, cell) => (
+                          <TableCell key={cell}>
+                            <Skeleton className="h-5 w-full max-w-32" />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  : data?.items.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <UserCell user={user} />
+                        </TableCell>
+                        <TableCell>
+                          <span dir="ltr">{user.phone}</span>
+                        </TableCell>
+                        <TableCell>
+                          <RoleBadges roles={user.roles} />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge active={user.isActive} />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <RowActions
+                            user={user}
+                            dir={dir}
+                            onEdit={() => openEdit(user)}
+                            onDelete={() => openDelete(user)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile cards */}
+          <ul
+            aria-busy={loading}
+            className={cn(
+              "flex flex-col gap-3 transition-opacity md:hidden",
+              loading && data && "opacity-60",
+            )}
+          >
+            {showSkeleton
+              ? Array.from({ length: 4 }, (_, index) => (
+                  <li key={index} className="rounded-2xl border bg-card p-4">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="mt-3 h-4 w-24" />
+                  </li>
+                ))
+              : data?.items.map((user) => (
+                  <li key={user.id} className="rounded-2xl border bg-card p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <UserCell user={user} />
+                      <RowActions
+                        user={user}
+                        dir={dir}
+                        onEdit={() => openEdit(user)}
+                        onDelete={() => openDelete(user)}
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <StatusBadge active={user.isActive} />
+                      <RoleBadges roles={user.roles} />
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      <span dir="ltr">{user.phone}</span> ·{" "}
+                      {formatDate(user.createdAt)}
+                    </p>
+                  </li>
+                ))}
+          </ul>
+
+          {data && data.total > 0 ? (
+            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+              <p className="text-sm text-muted-foreground">
+                {t("pagination.summary", {
+                  from: format.number(from),
+                  to: format.number(to),
+                  total: format.number(total),
+                })}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((value) => value - 1)}
+                >
+                  <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
+                  {tc("previous")}
+                </Button>
+                <span
+                  className="px-2 text-sm text-muted-foreground"
+                  aria-live="polite"
+                >
+                  {t("pagination.page", {
+                    page: format.number(page),
+                    pages: format.number(totalPages),
+                  })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((value) => value + 1)}
+                >
+                  {tc("next")}
+                  <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+
+      <UserFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        user={formUser}
+        onSaved={() => {
+          setFormOpen(false);
+          reload();
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t("delete.title")}
+        description={t("delete.description", {
+          name: deleteTarget
+            ? `${deleteTarget.firstName} ${deleteTarget.lastName}`
+            : "",
+        })}
+        confirmLabel={t("delete.confirm")}
+        onConfirm={confirmDelete}
+      />
+    </div>
+  );
+}

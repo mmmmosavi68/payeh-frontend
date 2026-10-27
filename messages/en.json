@@ -13,7 +13,18 @@
     "skipToContent": "Skip to main content",
     "logout": "Logout",
     "home": "Home",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "sampleNotice": "The data on this page is sample data and will be replaced once the API is connected.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "retry": "Try again",
+    "actions": "Actions",
+    "previous": "Previous",
+    "next": "Next",
+    "operationFailed": "The operation failed. Please try again."
   },
   "nav": {
     "label": "Main navigation",
@@ -88,6 +99,112 @@
       "description": "Latest attempts to sign in to the system",
       "success": "Success",
       "failed": "Failed"
+    }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "supervisor": "Supervisor",
+    "operator": "Operator"
+  },
+  "users": {
+    "title": "Users",
+    "description": "Manage system users and accounts",
+    "add": "Add user",
+    "searchPlaceholder": "Search by name, username or phone",
+    "filters": {
+      "status": "Status",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "columns": {
+      "user": "User",
+      "phone": "Phone",
+      "roles": "Roles",
+      "status": "Status",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "pagination": {
+      "summary": "Showing {from} to {to} of {total} users",
+      "page": "Page {page} of {pages}"
+    },
+    "empty": {
+      "title": "No users found",
+      "description": "Change the filters or add a new user.",
+      "clear": "Clear filters"
+    },
+    "error": {
+      "title": "Failed to load users",
+      "description": "Could not reach the server. Please try again."
+    },
+    "form": {
+      "createTitle": "Add user",
+      "createDescription": "Enter the details of the new user.",
+      "editTitle": "Edit user",
+      "editDescription": "Update the user's details.",
+      "username": "Username",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Mobile number",
+      "password": "Password",
+      "roles": "Roles",
+      "isActive": "Account is active",
+      "usernameTaken": "This username is already taken.",
+      "validation": {
+        "usernameFormat": "Latin letters, digits and . _ - only (3 to 32 characters)",
+        "firstNameRequired": "Enter the first name",
+        "lastNameRequired": "Enter the last name",
+        "phoneInvalid": "Invalid mobile number (e.g. 09123456789)",
+        "passwordMin": "Password must be at least 8 characters",
+        "rolesRequired": "Select at least one role"
+      }
+    },
+    "delete": {
+      "title": "Delete user",
+      "description": "Are you sure you want to delete “{name}”? This cannot be undone.",
+      "confirm": "Yes, delete"
+    },
+    "toast": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted"
+    }
+  },
+  "sessions": {
+    "title": "Sessions",
+    "description": "Devices that are signed in to your account",
+    "current": "This device",
+    "lastActive": "Last active: {time}",
+    "signedInAt": "Signed in: {date}",
+    "ip": "IP",
+    "revoke": "End session",
+    "revokeOthers": "Sign out other devices",
+    "revokeDialog": {
+      "title": "End session",
+      "description": "The device “{device}” will be signed out of your account.",
+      "confirm": "End session"
+    },
+    "revokeOthersDialog": {
+      "title": "Sign out other devices",
+      "description": "All other sessions will end and only this device stays signed in.",
+      "confirm": "Yes, sign them out"
+    },
+    "empty": {
+      "title": "No sessions found",
+      "description": "There are no active sessions for your account."
+    },
+    "error": {
+      "title": "Failed to load sessions",
+      "description": "Could not reach the server. Please try again."
+    },
+    "toast": {
+      "revoked": "Session ended",
+      "revokedOthers": "Signed out of other devices"
     }
   }
 }

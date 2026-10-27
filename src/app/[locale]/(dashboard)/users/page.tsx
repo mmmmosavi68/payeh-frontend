@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PageHeader } from "@/components/layout/page-header";
+import { UsersTable } from "@/features/users/components/users-table";
 
 export default async function UsersPage({
   params,
@@ -8,17 +9,16 @@ export default async function UsersPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("nav");
+  const t = await getTranslations("users");
 
   return (
     <>
       <PageHeader
-        title={t("items.users")}
-        crumbs={[{ label: t("items.users") }]}
+        title={t("title")}
+        description={t("description")}
+        crumbs={[{ label: t("title") }]}
       />
-      <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">
-        {t("placeholder")}
-      </div>
+      <UsersTable />
     </>
   );
 }

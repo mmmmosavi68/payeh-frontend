@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PageHeader } from "@/components/layout/page-header";
+import { SessionsList } from "@/features/sessions/components/sessions-list";
 
 export default async function SessionsPage({
   params,
@@ -8,17 +9,16 @@ export default async function SessionsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("nav");
+  const t = await getTranslations("sessions");
 
   return (
     <>
       <PageHeader
-        title={t("items.sessions")}
-        crumbs={[{ label: t("items.sessions") }]}
+        title={t("title")}
+        description={t("description")}
+        crumbs={[{ label: t("title") }]}
       />
-      <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">
-        {t("placeholder")}
-      </div>
+      <SessionsList />
     </>
   );
 }
