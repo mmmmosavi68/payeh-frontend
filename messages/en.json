@@ -37,6 +37,41 @@
   "footer": {
     "rights": "© {year} {name}. All rights reserved."
   },
+  "auth": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to your account to continue",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "invalidCredentials": "Incorrect username or password.",
+    "genericError": "Something went wrong. Please try again.",
+    "demoHint": "Demo mode: any username and password works (the password wrong fails) and the verification code is 123456.",
+    "validation": {
+      "usernameRequired": "Enter your username",
+      "passwordRequired": "Enter your password",
+      "otpInvalid": "The verification code must be 6 digits"
+    },
+    "otp": {
+      "title": "Verify your identity",
+      "subtitle": "Enter the 6-digit code sent to {phone}",
+      "code": "Verification code",
+      "verify": "Verify and sign in",
+      "verifying": "Verifying...",
+      "resendIn": "Resend code in {seconds}s",
+      "resend": "Resend code",
+      "back": "Back",
+      "invalid": "The code you entered is incorrect."
+    },
+    "captcha": {
+      "label": "Security check",
+      "placeholder": "The captcha widget appears here (only when the API requires it for this step)."
+    }
+  },
   "dashboard": {
     "title": "Overview",
     "description": "A summary of the system status",
