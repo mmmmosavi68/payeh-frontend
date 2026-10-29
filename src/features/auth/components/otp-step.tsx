@@ -7,32 +7,44 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { toLatinDigits } from "@/lib/digits";
-import {
-  MockAuthError,
-  mockResendOtp,
-  mockVerifyOtp,
-} from "@/lib/mock/auth";
+import type { AuthConfig } from "@/types/auth";
+import { authErrorKey } from "../error-message";
 import { createOtpSchema, type OtpValues } from "../schemas/login-schema";
 import { AuthField } from "./auth-field";
-import { CaptchaSlot, demoCaptchaEnabled } from "./captcha-slot";
+import { useCaptcha } from "./use-captcha";
 
-const RESEND_SECONDS = 60;
-
-type OtpFormProps = {
+type OtpStepProps = {
+  config: AuthConfig;
+  maskedMobile: string;
+  resendAfterSeconds: number;
+  onVerify: (code: string, captchaToken?: string) => Promise<void>;
+  onResend: (captchaToken?: string) => Promise<{ resendAfterSeconds: number }>;
   onBack: () => void;
-  onSuccess: () => void;
 };
 
-export function OtpForm({ onBack, onSuccess }: OtpFormProps) {
+export function OtpStep({
+  config,
+  maskedMobile,
+  resendAfterSeconds,
+  onVerify,
+  onResend,
+  onBack,
+}: OtpStepProps) {
   const t = useTranslations("auth");
   const format = useFormatter();
+  const captcha = useCaptcha(config);
+
   const [formError, setFormError] = useState<string | null>(null);
-  const [seconds, setSeconds] = useState(RESEND_SECONDS);
+  const [seconds, setSeconds] = useState(resendAfterSeconds);
   const [resending, setResending] = useState(false);
 
   const schema = useMemo(
-    () => createOtpSchema(t("validation.otpInvalid")),
-    [t],
+    () =>
+      createOtpSchema(
+        config.otpLength,
+        t("validation.otpInvalid", { length: format.number(config.otpLength) }),
+      ),
+    [config.otpLength, t, format],
   );
 
   const {
@@ -52,26 +64,40 @@ export function OtpForm({ onBack, onSuccess }: OtpFormProps) {
     return () => window.clearTimeout(id);
   }, [seconds]);
 
+  function captchaMissing() {
+    if (captcha.enabled && !captcha.token) {
+      setFormError(t("errors.captchaRequired"));
+      return true;
+    }
+    return false;
+  }
+
   async function onSubmit(values: OtpValues) {
     setFormError(null);
+    if (captchaMissing()) return;
+
     try {
-      await mockVerifyOtp(values.code);
-      onSuccess();
+      await onVerify(values.code, captcha.token ?? undefined);
     } catch (error) {
-      setFormError(
-        error instanceof MockAuthError ? t("otp.invalid") : t("genericError"),
-      );
+      setFormError(t(`errors.${authErrorKey(error)}`));
+    } finally {
+      captcha.reset();
     }
   }
 
   async function resend() {
-    setResending(true);
     setFormError(null);
+    if (captchaMissing()) return;
+
+    setResending(true);
     try {
-      await mockResendOtp();
-      setSeconds(RESEND_SECONDS);
+      const result = await onResend(captcha.token ?? undefined);
+      setSeconds(result.resendAfterSeconds);
+    } catch (error) {
+      setFormError(t(`errors.${authErrorKey(error)}`));
     } finally {
       setResending(false);
+      captcha.reset();
     }
   }
 
@@ -81,6 +107,13 @@ export function OtpForm({ onBack, onSuccess }: OtpFormProps) {
       noValidate
       className="flex flex-col gap-4"
     >
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">{t("otp.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("otp.sentTo", { phone: `\u2066${maskedMobile}\u2069` })}
+        </p>
+      </div>
+
       {formError ? (
         <div
           role="alert"
@@ -95,21 +128,21 @@ export function OtpForm({ onBack, onSuccess }: OtpFormProps) {
         label={t("otp.code")}
         inputMode="numeric"
         autoComplete="one-time-code"
-        maxLength={6}
+        maxLength={config.otpLength}
         dir="ltr"
-        placeholder="------"
+        placeholder={"-".repeat(config.otpLength)}
         className="text-center text-lg tracking-[0.5em]"
         error={errors.code?.message}
         {...codeField}
         onChange={(event) => {
           event.target.value = toLatinDigits(event.target.value)
             .replace(/\D/g, "")
-            .slice(0, 6);
+            .slice(0, config.otpLength);
           return onCodeChange(event);
         }}
       />
 
-      {demoCaptchaEnabled ? <CaptchaSlot /> : null}
+      {captcha.element}
 
       <Button
         type="submit"

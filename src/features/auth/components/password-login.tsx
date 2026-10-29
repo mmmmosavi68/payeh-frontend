@@ -6,26 +6,83 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { MockAuthError, mockSignIn } from "@/lib/mock/auth";
 import {
-  createLoginSchema,
-  type LoginValues,
+  passwordLogin,
+  resendChallenge,
+  verifyChallenge,
+} from "@/lib/mock/auth";
+import type { AuthConfig, LoginChallenge } from "@/types/auth";
+import { authErrorKey } from "../error-message";
+import {
+  createPasswordLoginSchema,
+  type PasswordLoginValues,
 } from "../schemas/login-schema";
 import { AuthField } from "./auth-field";
-import { CaptchaSlot, demoCaptchaEnabled } from "./captcha-slot";
+import { OtpStep } from "./otp-step";
+import { useCaptcha } from "./use-captcha";
 
-export function CredentialsForm({
-  onSuccess,
-}: {
-  onSuccess: (phone: string) => void;
-}) {
+type PasswordLoginProps = { config: AuthConfig; onDone: () => void };
+
+type Step =
+  | { name: "credentials" }
+  | { name: "otp"; challenge: LoginChallenge };
+
+export function PasswordLogin({ config, onDone }: PasswordLoginProps) {
+  const [step, setStep] = useState<Step>({ name: "credentials" });
+
+  if (step.name === "otp") {
+    const { challenge } = step;
+
+    return (
+      <OtpStep
+        config={config}
+        maskedMobile={challenge.maskedMobile}
+        resendAfterSeconds={challenge.resendAfterSeconds}
+        onVerify={async (code, captchaToken) => {
+          await verifyChallenge({
+            challengeId: challenge.challengeId,
+            code,
+            captchaToken,
+          });
+          onDone();
+        }}
+        onResend={async (captchaToken) => {
+          const next = await resendChallenge({
+            challengeId: challenge.challengeId,
+            captchaToken,
+          });
+          setStep({ name: "otp", challenge: next });
+          return { resendAfterSeconds: next.resendAfterSeconds };
+        }}
+        onBack={() => setStep({ name: "credentials" })}
+      />
+    );
+  }
+
+  return (
+    <CredentialsForm
+      config={config}
+      onDone={onDone}
+      onChallenge={(challenge) => setStep({ name: "otp", challenge })}
+    />
+  );
+}
+
+type CredentialsFormProps = {
+  config: AuthConfig;
+  onDone: () => void;
+  onChallenge: (challenge: LoginChallenge) => void;
+};
+
+function CredentialsForm({ config, onDone, onChallenge }: CredentialsFormProps) {
   const t = useTranslations("auth");
+  const captcha = useCaptcha(config);
   const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const schema = useMemo(
     () =>
-      createLoginSchema({
+      createPasswordLoginSchema({
         usernameRequired: t("validation.usernameRequired"),
         passwordRequired: t("validation.passwordRequired"),
       }),
@@ -36,22 +93,32 @@ export function CredentialsForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginValues>({
+  } = useForm<PasswordLoginValues>({
     resolver: zodResolver(schema),
     defaultValues: { username: "", password: "" },
   });
 
-  async function onSubmit(values: LoginValues) {
+  async function onSubmit(values: PasswordLoginValues) {
     setFormError(null);
+
+    if (captcha.enabled && !captcha.token) {
+      setFormError(t("errors.captchaRequired"));
+      return;
+    }
+
     try {
-      const result = await mockSignIn(values);
-      onSuccess(result.phone);
+      const result = await passwordLogin({
+        userName: values.username,
+        password: values.password,
+        captchaToken: captcha.token ?? undefined,
+      });
+
+      if (result.requiresOtp) onChallenge(result.challenge);
+      else onDone();
     } catch (error) {
-      setFormError(
-        error instanceof MockAuthError
-          ? t("invalidCredentials")
-          : t("genericError"),
-      );
+      setFormError(t(`errors.${authErrorKey(error)}`));
+    } finally {
+      captcha.reset();
     }
   }
 
@@ -108,7 +175,7 @@ export function CredentialsForm({
         {...register("password")}
       />
 
-      {demoCaptchaEnabled ? <CaptchaSlot /> : null}
+      {captcha.element}
 
       <Button
         type="submit"
