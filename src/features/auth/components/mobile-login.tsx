@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { maskMobile, normalizeMobile } from "@/lib/digits";
-import { requestMobileOtp, verifyMobileOtp } from "@/lib/mock/auth";
+import { requestMobileOtp, verifyMobileOtp } from "../api";
 import type { AuthConfig } from "@/types/auth";
 import { authErrorKey } from "../error-message";
 import {

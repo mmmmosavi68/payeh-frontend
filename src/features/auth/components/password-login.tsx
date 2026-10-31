@@ -10,7 +10,7 @@ import {
   passwordLogin,
   resendChallenge,
   verifyChallenge,
-} from "@/lib/mock/auth";
+} from "../api";
 import type { AuthConfig, LoginChallenge } from "@/types/auth";
 import { authErrorKey } from "../error-message";
 import {

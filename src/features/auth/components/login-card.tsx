@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRemoteData } from "@/hooks/use-remote-data";
 import { useRouter } from "@/i18n/navigation";
 import { localeDirections } from "@/i18n/routing";
-import { getAuthConfig } from "@/lib/mock/auth";
+import { getAuthConfig } from "../api";
 import { MobileLogin } from "./mobile-login";
 import { PasswordLogin } from "./password-login";
+import { safeReturnUrl } from "@/lib/security/return-url";
 
 type Method = "mobile" | "password";
 
@@ -32,7 +33,15 @@ export function LoginCard() {
   if (config?.passwordLoginEnabled) methods.push("password");
   const active = methods.includes(tab) ? tab : methods[0];
 
-  const done = () => router.replace("/dashboard");
+  // const done = () => router.replace("/dashboard");
+  const done = () => {
+    const raw = new URLSearchParams(window.location.search).get("returnUrl");
+    console.log(raw)
+        console.log("asdasdasd")
+
+    router.replace(safeReturnUrl(raw));
+  };
+
 
   let body: React.ReactNode;
 

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
+import { useLogout } from "@/features/auth/use-logout";
 
 type LogoutLinkProps = {
   collapsed?: boolean;
@@ -26,20 +27,24 @@ type LogoutLinkProps = {
 
 function LogoutLink({ collapsed = false, onNavigate }: LogoutLinkProps) {
   const t = useTranslations("common");
+  const handleLogout = useLogout();
 
   return (
-    <Link
-      href="/login"
-      onClick={onNavigate}
+    <button
+      type="button"
+      onClick={() => {
+        onNavigate?.();
+        void handleLogout();
+      }}
       title={collapsed ? t("logout") : undefined}
       aria-label={collapsed ? t("logout") : undefined}
-      className="flex h-10 items-center gap-3 rounded-md px-[11px] text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+      className="flex h-10 w-full items-center gap-3 rounded-md px-[11px] text-start text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
     >
       <LogOut className="size-5 shrink-0" aria-hidden />
       <span className={cn("truncate", collapsed && "sr-only")}>
         {t("logout")}
       </span>
-    </Link>
+    </button>
   );
 }
 

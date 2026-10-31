@@ -11,11 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
+import { useLogout } from "@/features/auth/use-logout";
+
 
 export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
   const t = useTranslations("user");
   const tc = useTranslations("common");
-
+  const  handleLogout = useLogout();
   return (
     <DropdownMenu dir={dir}>
       <DropdownMenuTrigger asChild>
@@ -41,10 +43,15 @@ export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/login">
+          {/* <Link href="/login">
             <LogOut className="size-4" aria-hidden />
             {tc("logout")}
-          </Link>
+          </Link> */}
+
+             <DropdownMenuItem onSelect={() => void handleLogout()}>
+          <LogOut className="size-4" aria-hidden />
+          {tc("logout")}
+        </DropdownMenuItem>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
