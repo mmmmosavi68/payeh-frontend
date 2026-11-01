@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeScript } from "@/components/shared/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { localeDirections, routing } from "@/i18n/routing";
@@ -38,6 +39,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   setRequestLocale(locale);
 
+  // nonce را proxy.ts برای هر درخواست می‌سازد؛ خواندن headers() صفحه را پویا (dynamic) می‌کند.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang={locale}
@@ -45,19 +49,15 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       className={vazirmatn.variable}
       suppressHydrationWarning
     >
+      <head>
+        <ThemeScript nonce={nonce} />
+      </head>
       <body
         className={`${vazirmatn.className} min-h-dvh bg-background text-foreground antialiased`}
       >
         <NextIntlClientProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>{children}</TooltipProvider>
-            <Toaster />
-          </ThemeProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster />
         </NextIntlClientProvider>
       </body>
     </html>

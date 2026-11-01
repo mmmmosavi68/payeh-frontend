@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, LogOut } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,14 +10,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "@/i18n/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getMe, type Me } from "@/features/auth/me";
 import { useLogout } from "@/features/auth/use-logout";
+import { useRemoteData } from "@/hooks/use-remote-data";
 
+function displayName(me: Me): string {
+  const full = `${me.firstName ?? ""} ${me.lastName ?? ""}`.trim();
+  return full || me.userName;
+}
+
+function initialsOf(me: Me): string {
+  const first = Array.from(me.firstName?.trim() ?? "")[0];
+  const last = Array.from(me.lastName?.trim() ?? "")[0];
+  if (first && last) return `${first}${last}`;
+  return Array.from(me.userName).slice(0, 2).join("").toUpperCase();
+}
 
 export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
   const t = useTranslations("user");
   const tc = useTranslations("common");
-  const  handleLogout = useLogout();
+  const locale = useLocale();
+  const handleLogout = useLogout();
+  const { data: me } = useRemoteData("me", getMe);
+
+  const roles = me
+    ? new Intl.ListFormat(locale, { style: "narrow", type: "unit" }).format(
+        me.roles.map((role) => (locale === "fa" ? role.nameFa : role.nameEn)),
+      )
+    : "";
+
   return (
     <DropdownMenu dir={dir}>
       <DropdownMenuTrigger asChild>
@@ -26,32 +48,39 @@ export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
           aria-label={t("menu")}
           className="flex h-9 items-center gap-2 rounded-full border bg-secondary ps-1 pe-3 text-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="grid size-7 place-items-center rounded-full border bg-muted text-xs font-medium">
-            {t("initials")}
-          </span>
-          <span className="hidden font-medium sm:block">{t("demoName")}</span>
-          <ChevronDown
-            className="size-4 text-muted-foreground"
-            aria-hidden
-          />
+          {me ? (
+            <>
+              <span className="grid size-7 place-items-center rounded-full border bg-muted text-xs font-medium">
+                {initialsOf(me)}
+              </span>
+              <span className="hidden max-w-32 truncate font-medium sm:block">
+                {displayName(me)}
+              </span>
+            </>
+          ) : (
+            <>
+              <Skeleton className="size-7 rounded-full" />
+              <Skeleton className="hidden h-4 w-20 sm:block" />
+            </>
+          )}
+          <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <p className="font-medium">{t("demoName")}</p>
-          <p className="text-xs text-muted-foreground">{t("demoRole")}</p>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          {/* <Link href="/login">
-            <LogOut className="size-4" aria-hidden />
-            {tc("logout")}
-          </Link> */}
-
-             <DropdownMenuItem onSelect={() => void handleLogout()}>
+        {me ? (
+          <>
+            <DropdownMenuLabel className="font-normal">
+              <p className="truncate font-medium">{displayName(me)}</p>
+              {roles ? (
+                <p className="truncate text-xs text-muted-foreground">{roles}</p>
+              ) : null}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
+        <DropdownMenuItem onSelect={() => void handleLogout()}>
           <LogOut className="size-4" aria-hidden />
           {tc("logout")}
-        </DropdownMenuItem>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

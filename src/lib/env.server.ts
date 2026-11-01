@@ -15,9 +15,7 @@ const schema = z.object({
 const parsed = schema.safeParse(process.env);
 
 if (!parsed.success) {
-  throw new Error(
-    `Invalid server environment variables:\n${z.prettifyError(parsed.error)}`,
-  );
+  throw new Error(`Invalid server environment variables:\n${z.prettifyError(parsed.error)}`);
 }
 
 export const env = parsed.data;

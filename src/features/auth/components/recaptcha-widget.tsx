@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/theme"
 import {
   forwardRef,
   useEffect,
