@@ -129,18 +129,22 @@
     "title": "Users",
     "description": "Manage system users and accounts",
     "add": "Add user",
-    "searchPlaceholder": "Search by name, username or phone",
+    "searchPlaceholder": "Search by name, username, phone or email",
+    "never": "Never signed in",
     "filters": {
       "status": "Status",
       "all": "All",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "role": "Role",
+      "allRoles": "All roles"
     },
     "columns": {
       "user": "User",
       "phone": "Phone",
       "roles": "Roles",
       "status": "Status",
+      "lastLogin": "Last sign-in",
       "createdAt": "Created",
       "actions": "Actions"
     },
@@ -161,31 +165,43 @@
       "title": "Failed to load users",
       "description": "Could not reach the server. Please try again."
     },
+    "forbidden": {
+      "title": "Access denied",
+      "description": "You do not have access to user management. Contact your administrator to request access."
+    },
     "form": {
       "createTitle": "Add user",
       "createDescription": "Enter the details of the new user.",
       "editTitle": "Edit user",
-      "editDescription": "Update the user's details.",
+      "editDescription": "The username and national code cannot be changed after creation.",
       "username": "Username",
       "firstName": "First name",
       "lastName": "Last name",
       "phone": "Mobile number",
-      "password": "Password",
+      "email": "Email (optional)",
+      "nationalCode": "National code",
+      "password": "Password (optional)",
+      "passwordNew": "New password (optional)",
+      "passwordHintCreate": "Signing in is mainly done with an SMS code; a password is only needed for username sign-in.",
+      "passwordHintEdit": "Changing the password ends all of this user's sessions.",
       "roles": "Roles",
+      "rolesFailed": "Could not load the roles.",
       "isActive": "Account is active",
-      "usernameTaken": "This username is already taken.",
+      "conflict": "The username, mobile number or national code is already registered.",
       "validation": {
-        "usernameFormat": "Latin letters, digits and . _ - only (3 to 32 characters)",
+        "usernameFormat": "The username must be 3 to 50 characters, start with a Latin letter and contain only letters, digits, dots and underscores",
         "firstNameRequired": "Enter the first name",
         "lastNameRequired": "Enter the last name",
         "phoneInvalid": "Invalid mobile number (e.g. 09123456789)",
+        "emailInvalid": "Invalid email address",
+        "nationalCodeInvalid": "The national code must be 10 digits",
         "passwordMin": "Password must be at least 8 characters",
         "rolesRequired": "Select at least one role"
       }
     },
     "delete": {
       "title": "Delete user",
-      "description": "Are you sure you want to delete “{name}”? This cannot be undone.",
+      "description": "Are you sure you want to delete “{name}”? Their sessions will also end.",
       "confirm": "Yes, delete"
     },
     "toast": {

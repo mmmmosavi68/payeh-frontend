@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -17,16 +17,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { toLatinDigits } from "@/lib/digits";
-import { createUser, updateUser } from "@/lib/mock/users";
-import { MockApiError } from "@/lib/mock/utils";
-import { roleKeys, type UserRecord } from "@/types/user";
+import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeMobile, toLatinDigits } from "@/lib/digits";
+import type { RoleInfo, UserRecord } from "@/types/user";
+import { createUser, updateUser } from "../api";
+import { userErrorText } from "../error-message";
 import { createUserSchema, type UserFormValues } from "../schemas/user-schema";
 
 type UserFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: UserRecord | null;
+  roles: RoleInfo[] | undefined;
+  rolesFailed: boolean;
+  onRetryRoles: () => void;
   onSaved: () => void;
 };
 
@@ -34,6 +38,9 @@ export function UserFormDialog({
   open,
   onOpenChange,
   user,
+  roles,
+  rolesFailed,
+  onRetryRoles,
   onSaved,
 }: UserFormDialogProps) {
   const t = useTranslations("users.form");
@@ -49,6 +56,9 @@ export function UserFormDialog({
         </DialogHeader>
         <UserForm
           user={user}
+          roles={roles}
+          rolesFailed={rolesFailed}
+          onRetryRoles={onRetryRoles}
           onCancel={() => onOpenChange(false)}
           onSaved={onSaved}
         />
@@ -59,15 +69,27 @@ export function UserFormDialog({
 
 type UserFormProps = {
   user: UserRecord | null;
+  roles: RoleInfo[] | undefined;
+  rolesFailed: boolean;
+  onRetryRoles: () => void;
   onCancel: () => void;
   onSaved: () => void;
 };
 
-function UserForm({ user, onCancel, onSaved }: UserFormProps) {
+function UserForm({
+  user,
+  roles,
+  rolesFailed,
+  onRetryRoles,
+  onCancel,
+  onSaved,
+}: UserFormProps) {
   const t = useTranslations("users");
   const tc = useTranslations("common");
-  const tr = useTranslations("roles");
+  const tRoot = useTranslations();
+  const locale = useLocale();
   const mode = user ? "edit" : "create";
+  const [formError, setFormError] = useState<string | null>(null);
 
   const schema = useMemo(
     () =>
@@ -77,6 +99,8 @@ function UserForm({ user, onCancel, onSaved }: UserFormProps) {
           firstNameRequired: t("form.validation.firstNameRequired"),
           lastNameRequired: t("form.validation.lastNameRequired"),
           phoneInvalid: t("form.validation.phoneInvalid"),
+          emailInvalid: t("form.validation.emailInvalid"),
+          nationalCodeInvalid: t("form.validation.nationalCodeInvalid"),
           passwordMin: t("form.validation.passwordMin"),
           rolesRequired: t("form.validation.rolesRequired"),
         },
@@ -89,46 +113,50 @@ function UserForm({ user, onCancel, onSaved }: UserFormProps) {
     register,
     handleSubmit,
     control,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<UserFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      username: user?.username ?? "",
+      username: user?.userName ?? "",
+      nationalCode: user?.nationalCode ?? "",
       firstName: user?.firstName ?? "",
       lastName: user?.lastName ?? "",
       phone: user?.phone ?? "",
+      email: user?.email ?? "",
       password: "",
-      roles: user?.roles ?? [],
+      roleIds: user?.roles.map((role) => role.id) ?? [],
       isActive: user?.isActive ?? true,
     },
   });
 
   async function onSubmit(values: UserFormValues) {
-    const input = {
-      username: values.username.trim(),
+    setFormError(null);
+
+    const common = {
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
-      phone: toLatinDigits(values.phone.trim()),
-      roles: values.roles,
+      phone: normalizeMobile(values.phone),
+      email: values.email.trim(),
+      password: values.password,
+      roleIds: values.roleIds,
       isActive: values.isActive,
     };
 
     try {
       if (user) {
-        await updateUser(user.id, input);
+        await updateUser(user.id, common);
         toast.success(t("toast.updated"));
       } else {
-        await createUser({ ...input, password: values.password });
+        await createUser({
+          ...common,
+          userName: values.username.trim(),
+          nationalCode: toLatinDigits(values.nationalCode.trim()),
+        });
         toast.success(t("toast.created"));
       }
       onSaved();
     } catch (error) {
-      if (error instanceof MockApiError && error.code === "username_taken") {
-        setError("username", { message: t("form.usernameTaken") });
-      } else {
-        toast.error(tc("operationFailed"));
-      }
+      setFormError(userErrorText(error, tRoot));
     }
   }
 
@@ -138,6 +166,15 @@ function UserForm({ user, onCancel, onSaved }: UserFormProps) {
       noValidate
       className="flex flex-col gap-4"
     >
+      {formError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {formError}
+        </div>
+      ) : null}
+
       <FormField
         id="user-username"
         label={t("form.username")}
@@ -163,62 +200,108 @@ function UserForm({ user, onCancel, onSaved }: UserFormProps) {
         />
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          id="user-phone"
+          label={t("form.phone")}
+          dir="ltr"
+          inputMode="tel"
+          autoComplete="off"
+          error={errors.phone?.message}
+          {...register("phone")}
+        />
+        <FormField
+          id="user-national-code"
+          label={t("form.nationalCode")}
+          dir="ltr"
+          inputMode="numeric"
+          maxLength={10}
+          autoComplete="off"
+          readOnly={mode === "edit"}
+          error={errors.nationalCode?.message}
+          {...register("nationalCode")}
+        />
+      </div>
+
       <FormField
-        id="user-phone"
-        label={t("form.phone")}
+        id="user-email"
+        label={t("form.email")}
+        type="email"
         dir="ltr"
-        inputMode="tel"
         autoComplete="off"
-        error={errors.phone?.message}
-        {...register("phone")}
+        error={errors.email?.message}
+        {...register("email")}
       />
 
-      {mode === "create" ? (
+      <div className="flex flex-col gap-1">
         <FormField
           id="user-password"
-          label={t("form.password")}
+          label={mode === "edit" ? t("form.passwordNew") : t("form.password")}
           type="password"
           dir="ltr"
           autoComplete="new-password"
           error={errors.password?.message}
           {...register("password")}
         />
-      ) : null}
+        <p className="text-xs text-muted-foreground">
+          {mode === "edit"
+            ? t("form.passwordHintEdit")
+            : t("form.passwordHintCreate")}
+        </p>
+      </div>
 
       <Controller
         control={control}
-        name="roles"
+        name="roleIds"
         render={({ field }) => (
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1 text-sm font-medium">
               {t("form.roles")}
             </legend>
-            <div className="flex flex-wrap gap-x-5 gap-y-2">
-              {roleKeys.map((role) => {
-                const id = `user-role-${role}`;
-                return (
-                  <div key={role} className="flex items-center gap-2">
-                    <Checkbox
-                      id={id}
-                      checked={field.value.includes(role)}
-                      onCheckedChange={(checked) =>
-                        field.onChange(
-                          checked === true
-                            ? [...field.value, role]
-                            : field.value.filter((item) => item !== role),
-                        )
-                      }
-                    />
-                    <Label htmlFor={id} className="font-normal">
-                      {tr(role)}
-                    </Label>
-                  </div>
-                );
-              })}
-            </div>
-            {errors.roles?.message ? (
+
+            {roles ? (
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                {roles.map((role) => {
+                  const id = `user-role-${role.id}`;
+                  return (
+                    <div key={role.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={id}
+                        checked={field.value.includes(role.id)}
+                        onCheckedChange={(checked) =>
+                          field.onChange(
+                            checked === true
+                              ? [...field.value, role.id]
+                              : field.value.filter((item) => item !== role.id),
+                          )
+                        }
+                      />
+                      <Label htmlFor={id} className="font-normal">
+                        {locale === "fa" ? role.nameFa : role.nameEn}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : rolesFailed ? (
+              <p className="flex items-center gap-2 text-sm text-destructive">
+                {t("form.rolesFailed")}
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={onRetryRoles}
+                >
+                  {tc("retry")}
+                </Button>
+              </p>
+            ) : (
+              <Skeleton className="h-5 w-48" />
+            )}
+
+            {errors.roleIds?.message ? (
               <p role="alert" className="text-xs text-destructive">
-                {errors.roles.message}
+                {errors.roleIds.message}
               </p>
             ) : null}
           </fieldset>
@@ -252,7 +335,11 @@ function UserForm({ user, onCancel, onSaved }: UserFormProps) {
         >
           {tc("cancel")}
         </Button>
-        <Button type="submit" className="rounded-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="rounded-full"
+          disabled={isSubmitting || !roles}
+        >
           {isSubmitting ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
           ) : null}

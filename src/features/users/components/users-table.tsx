@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Search,
+  ShieldAlert,
   Trash2,
   Users,
 } from "lucide-react";
@@ -18,7 +19,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState, ErrorState } from "@/components/shared/data-states";
-import { SampleNotice } from "@/components/shared/sample-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,21 +44,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getMe } from "@/features/auth/me";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRemoteData } from "@/hooks/use-remote-data";
 import { localeDirections } from "@/i18n/routing";
-import { deleteUser, listUsers } from "@/lib/mock/users";
+import { ApiError, ApiStatus } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
-import type { UserQuery, UserRecord } from "@/types/user";
+import type { UserQuery, UserRecord, UserSort } from "@/types/user";
+import { deleteUser, listRoles, listUsers } from "../api";
 import { UserFormDialog } from "./user-form-dialog";
 
 const PAGE_SIZE = 10;
 
-type SortKey = UserQuery["sort"];
 type SortDir = UserQuery["dir"];
 
+function fullName(user: UserRecord) {
+  return `${user.firstName} ${user.lastName}`.trim() || user.userName;
+}
+
 function initials(user: UserRecord) {
-  return `${Array.from(user.firstName)[0] ?? ""}${Array.from(user.lastName)[0] ?? ""}`;
+  const first = Array.from(user.firstName)[0];
+  const last = Array.from(user.lastName)[0];
+  if (first && last) return `${first}${last}`;
+  return Array.from(user.userName).slice(0, 2).join("").toUpperCase();
 }
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -78,12 +86,12 @@ function StatusBadge({ active }: { active: boolean }) {
 }
 
 function RoleBadges({ roles }: { roles: UserRecord["roles"] }) {
-  const t = useTranslations("roles");
+  const locale = useLocale();
   return (
     <div className="flex flex-wrap gap-1">
       {roles.map((role) => (
-        <Badge key={role} variant="secondary">
-          {t(role)}
+        <Badge key={role.id} variant="secondary">
+          {locale === "fa" ? role.nameFa : role.nameEn}
         </Badge>
       ))}
     </div>
@@ -97,11 +105,9 @@ function UserCell({ user }: { user: UserRecord }) {
         {initials(user)}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium">
-          {user.firstName} {user.lastName}
-        </p>
+        <p className="truncate text-sm font-medium">{fullName(user)}</p>
         <p className="truncate text-xs text-muted-foreground" dir="ltr">
-          {user.username}
+          {user.userName}
         </p>
       </div>
     </div>
@@ -111,11 +117,12 @@ function UserCell({ user }: { user: UserRecord }) {
 type RowActionsProps = {
   user: UserRecord;
   dir: "rtl" | "ltr";
+  canDelete: boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
 
-function RowActions({ user, dir, onEdit, onDelete }: RowActionsProps) {
+function RowActions({ user, dir, canDelete, onEdit, onDelete }: RowActionsProps) {
   const t = useTranslations("common");
 
   return (
@@ -125,7 +132,7 @@ function RowActions({ user, dir, onEdit, onDelete }: RowActionsProps) {
           variant="ghost"
           size="icon-sm"
           className="rounded-full"
-          aria-label={`${t("actions")}: ${user.firstName} ${user.lastName}`}
+          aria-label={`${t("actions")}: ${fullName(user)}`}
         >
           <Ellipsis className="size-4" aria-hidden />
         </Button>
@@ -135,10 +142,12 @@ function RowActions({ user, dir, onEdit, onDelete }: RowActionsProps) {
           <Pencil className="size-4" aria-hidden />
           {t("edit")}
         </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-          <Trash2 className="size-4" aria-hidden />
-          {t("delete")}
-        </DropdownMenuItem>
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+            <Trash2 className="size-4" aria-hidden />
+            {t("delete")}
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -166,6 +175,11 @@ function SortHead({ label, active, dir, onClick }: SortHeadProps) {
   );
 }
 
+function ariaSort(active: boolean, dir: SortDir) {
+  if (!active) return "none" as const;
+  return dir === "asc" ? ("ascending" as const) : ("descending" as const);
+}
+
 export function UsersTable() {
   const t = useTranslations("users");
   const tc = useTranslations("common");
@@ -176,7 +190,8 @@ export function UsersTable() {
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput, 300);
   const [status, setStatus] = useState<UserQuery["status"]>("all");
-  const [sort, setSort] = useState<SortKey>("createdAt");
+  const [roleId, setRoleId] = useState<number | null>(null);
+  const [sort, setSort] = useState<UserSort>("createdDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(1);
 
@@ -186,27 +201,36 @@ export function UsersTable() {
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
 
   const query = useMemo<UserQuery>(
-    () => ({ page, pageSize: PAGE_SIZE, search, status, sort, dir: sortDir }),
-    [page, search, status, sort, sortDir],
+    () => ({ page, pageSize: PAGE_SIZE, search, status, roleId, sort, dir: sortDir }),
+    [page, search, status, roleId, sort, sortDir],
   );
 
-  const { data, failed, loading, reload } = useRemoteData(
+  const { data, failed, error, loading, reload } = useRemoteData(
     JSON.stringify(query),
     () => listUsers(query),
   );
+  const {
+    data: roles,
+    failed: rolesFailed,
+    reload: reloadRoles,
+  } = useRemoteData("roles", listRoles);
+  const { data: me } = useRemoteData("me", getMe);
 
-  const hasFilters = searchInput !== "" || status !== "all";
+  const isForbidden =
+    error instanceof ApiError && error.status === ApiStatus.Forbidden;
+
+  const hasFilters = searchInput !== "" || status !== "all" || roleId !== null;
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(page * PAGE_SIZE, total);
 
-  function toggleSort(key: SortKey) {
+  function toggleSort(key: UserSort) {
     if (sort === key) {
       setSortDir((value) => (value === "asc" ? "desc" : "asc"));
     } else {
       setSort(key);
-      setSortDir(key === "createdAt" ? "desc" : "asc");
+      setSortDir(key === "userName" ? "asc" : "desc");
     }
     setPage(1);
   }
@@ -229,6 +253,7 @@ export function UsersTable() {
   function clearFilters() {
     setSearchInput("");
     setStatus("all");
+    setRoleId(null);
     setPage(1);
   }
 
@@ -240,15 +265,27 @@ export function UsersTable() {
     reload();
   }
 
+  if (isForbidden) {
+    return (
+      <EmptyState
+        icon={<ShieldAlert className="size-5" aria-hidden />}
+        title={t("forbidden.title")}
+        description={t("forbidden.description")}
+      />
+    );
+  }
+
   const showSkeleton = !data && !failed;
   const formatDate = (iso: string) =>
     format.dateTime(new Date(iso), { dateStyle: "medium" });
+  const formatLogin = (iso: string | null) =>
+    iso
+      ? format.dateTime(new Date(iso), { dateStyle: "medium", timeStyle: "short" })
+      : t("never");
 
   return (
     <div className="flex flex-col gap-4">
-      <SampleNotice />
-
-      <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search
             className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -263,9 +300,31 @@ export function UsersTable() {
             }}
             placeholder={t("searchPlaceholder")}
             aria-label={t("searchPlaceholder")}
+            maxLength={100}
             className="h-9 ps-9"
           />
         </div>
+
+        <Select
+          dir={dir}
+          value={roleId === null ? "all" : String(roleId)}
+          onValueChange={(value) => {
+            setRoleId(value === "all" ? null : Number(value));
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full lg:w-44" aria-label={t("filters.role")}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filters.allRoles")}</SelectItem>
+            {roles?.map((role) => (
+              <SelectItem key={role.id} value={String(role.id)}>
+                {locale === "fa" ? role.nameFa : role.nameEn}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Select
           dir={dir}
@@ -275,10 +334,7 @@ export function UsersTable() {
             setPage(1);
           }}
         >
-          <SelectTrigger
-            className="w-full sm:w-44"
-            aria-label={t("filters.status")}
-          >
+          <SelectTrigger className="w-full lg:w-40" aria-label={t("filters.status")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -330,39 +386,31 @@ export function UsersTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead
-                    aria-sort={
-                      sort === "name"
-                        ? sortDir === "asc"
-                          ? "ascending"
-                          : "descending"
-                        : "none"
-                    }
-                  >
+                  <TableHead aria-sort={ariaSort(sort === "userName", sortDir)}>
                     <SortHead
                       label={t("columns.user")}
-                      active={sort === "name"}
+                      active={sort === "userName"}
                       dir={sortDir}
-                      onClick={() => toggleSort("name")}
+                      onClick={() => toggleSort("userName")}
                     />
                   </TableHead>
                   <TableHead>{t("columns.phone")}</TableHead>
                   <TableHead>{t("columns.roles")}</TableHead>
                   <TableHead>{t("columns.status")}</TableHead>
-                  <TableHead
-                    aria-sort={
-                      sort === "createdAt"
-                        ? sortDir === "asc"
-                          ? "ascending"
-                          : "descending"
-                        : "none"
-                    }
-                  >
+                  <TableHead aria-sort={ariaSort(sort === "lastLoginDate", sortDir)}>
+                    <SortHead
+                      label={t("columns.lastLogin")}
+                      active={sort === "lastLoginDate"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("lastLoginDate")}
+                    />
+                  </TableHead>
+                  <TableHead aria-sort={ariaSort(sort === "createdDate", sortDir)}>
                     <SortHead
                       label={t("columns.createdAt")}
-                      active={sort === "createdAt"}
+                      active={sort === "createdDate"}
                       dir={sortDir}
-                      onClick={() => toggleSort("createdAt")}
+                      onClick={() => toggleSort("createdDate")}
                     />
                   </TableHead>
                   <TableHead className="w-12">
@@ -374,7 +422,7 @@ export function UsersTable() {
                 {showSkeleton
                   ? Array.from({ length: 5 }, (_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 6 }, (_, cell) => (
+                        {Array.from({ length: 7 }, (_, cell) => (
                           <TableCell key={cell}>
                             <Skeleton className="h-5 w-full max-w-32" />
                           </TableCell>
@@ -396,12 +444,16 @@ export function UsersTable() {
                           <StatusBadge active={user.isActive} />
                         </TableCell>
                         <TableCell className="text-muted-foreground">
+                          {formatLogin(user.lastLoginAt)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
                           {formatDate(user.createdAt)}
                         </TableCell>
                         <TableCell>
                           <RowActions
                             user={user}
                             dir={dir}
+                            canDelete={user.id !== me?.id}
                             onEdit={() => openEdit(user)}
                             onDelete={() => openDelete(user)}
                           />
@@ -434,6 +486,7 @@ export function UsersTable() {
                       <RowActions
                         user={user}
                         dir={dir}
+                        canDelete={user.id !== me?.id}
                         onEdit={() => openEdit(user)}
                         onDelete={() => openDelete(user)}
                       />
@@ -444,7 +497,7 @@ export function UsersTable() {
                     </div>
                     <p className="mt-3 text-xs text-muted-foreground">
                       <span dir="ltr">{user.phone}</span> ·{" "}
-                      {formatDate(user.createdAt)}
+                      {t("columns.lastLogin")}: {formatLogin(user.lastLoginAt)}
                     </p>
                   </li>
                 ))}
@@ -499,6 +552,9 @@ export function UsersTable() {
         open={formOpen}
         onOpenChange={setFormOpen}
         user={formUser}
+        roles={roles}
+        rolesFailed={rolesFailed}
+        onRetryRoles={reloadRoles}
         onSaved={() => {
           setFormOpen(false);
           reload();
@@ -510,9 +566,7 @@ export function UsersTable() {
         onOpenChange={setDeleteOpen}
         title={t("delete.title")}
         description={t("delete.description", {
-          name: deleteTarget
-            ? `${deleteTarget.firstName} ${deleteTarget.lastName}`
-            : "",
+          name: deleteTarget ? fullName(deleteTarget) : "",
         })}
         confirmLabel={t("delete.confirm")}
         onConfirm={confirmDelete}

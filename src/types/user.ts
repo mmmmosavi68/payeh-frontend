@@ -1,24 +1,50 @@
-export const roleKeys = ["admin", "supervisor", "operator"] as const;
-export type RoleKey = (typeof roleKeys)[number];
+export type RoleInfo = { id: number; nameEn: string; nameFa: string };
 
 export type UserRecord = {
   id: string;
-  username: string;
+  userName: string;
   firstName: string;
   lastName: string;
   phone: string;
-  roles: RoleKey[];
+  email: string;
+  nationalCode: string;
+  roles: RoleInfo[];
   isActive: boolean;
   createdAt: string;
+  lastLoginAt: string | null;
 };
 
-export type UserInput = Omit<UserRecord, "id" | "createdAt">;
+/** فیلدهای مرتب‌سازی که API پشتیبانی می‌کند. */
+export type UserSort = "userName" | "createdDate" | "lastLoginDate";
 
 export type UserQuery = {
   page: number;
   pageSize: number;
   search: string;
   status: "all" | "active" | "inactive";
-  sort: "name" | "username" | "createdAt";
+  roleId: number | null;
+  sort: UserSort;
   dir: "asc" | "desc";
+};
+
+export type CreateUserInput = {
+  userName: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  nationalCode: string;
+  password: string;
+  roleIds: number[];
+  isActive: boolean;
+};
+
+export type UpdateUserInput = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  password: string;
+  roleIds: number[];
+  isActive: boolean;
 };

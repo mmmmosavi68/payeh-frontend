@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type State<T> = { key: string; data?: T; failed?: boolean };
+type State<T> = { key: string; data?: T; failed?: boolean; error?: unknown };
 
 /**
  * Loads data whenever `key` changes. `loading` is derived, so the previous
@@ -27,8 +27,8 @@ export function useRemoteData<T>(key: string, fetcher: () => Promise<T>) {
       .then((data) => {
         if (!cancelled) setState({ key: requestKey, data });
       })
-      .catch(() => {
-        if (!cancelled) setState({ key: requestKey, failed: true });
+      .catch((error: unknown) => {
+        if (!cancelled) setState({ key: requestKey, failed: true, error });
       });
 
     return () => {
@@ -38,9 +38,12 @@ export function useRemoteData<T>(key: string, fetcher: () => Promise<T>) {
 
   const reload = useCallback(() => setVersion((value) => value + 1), []);
 
+  const isCurrentFailure = state.failed === true && state.key === requestKey;
+
   return {
     data: state.failed ? undefined : state.data,
-    failed: state.failed === true && state.key === requestKey,
+    failed: isCurrentFailure,
+    error: isCurrentFailure ? state.error : undefined,
     loading: state.key !== requestKey,
     reload,
   };
