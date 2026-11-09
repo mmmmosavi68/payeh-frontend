@@ -8,7 +8,7 @@ import { COOKIE, CSRF_HEADER } from "@/lib/auth/cookie-names";
 import { clearSessionCookies, setSessionCookies } from "@/lib/auth/cookies";
 import { env } from "@/lib/env.server";
 import { isSameOrigin } from "@/lib/security/origin";
-import { safeEqual } from "@/lib/security/tokens";
+import { randomToken, safeEqual } from "@/lib/security/tokens";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +18,8 @@ const MAX_QUERY = 1024;
 const NO_STORE = { "Cache-Control": "no-store" };
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
-/** create: از پاسخ توکن می‌گیرد و کوکی می‌گذارد. clear: کوکی‌ها را پاک می‌کند. */
 type SessionEffect = "none" | "create" | "clear";
+
 type Rule = {
   method: Method;
   pattern: RegExp;
@@ -29,9 +29,6 @@ type Rule = {
 
 const GUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-/**
- * فهرست مجاز: هر چیزی که اینجا نباشد 404 می‌شود (مثلاً Auth/refresh از بیرون در دسترس نیست).
- */
 const rules: Rule[] = [
   { method: "GET", pattern: /^auth\/config$/i, auth: false, session: "none" },
   { method: "GET", pattern: /^auth\/captcha$/i, auth: false, session: "none" },
@@ -48,16 +45,14 @@ const rules: Rule[] = [
   { method: "GET", pattern: /^roles$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^permissions\/me$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^auditlogs$/i, auth: true, session: "none" },
-  { method: "GET", pattern: /^home\/Test$/i, auth: false, session: "none" },
-  { method: "POST", pattern: /^home\/Test$/i, auth: false, session: "none" },
+  { method: "GET", pattern: /^home\/Test$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^home\/Test$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^users$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^users$/i, auth: true, session: "none" },
   { method: "GET", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
 ];
-
-// ───────────── پاسخ‌ها ─────────────
 
 function fail(httpStatus: number, statusCode: number, message: string) {
   return NextResponse.json({ isSuccess: false, statusCode, message }, { status: httpStatus, headers: NO_STORE });
@@ -100,30 +95,37 @@ function relay(result: BackendResult): NextResponse {
   }
 }
 
-// ───────────── جدا کردن توکن‌ها از پاسخ ─────────────
+const rawTokenSchema = z
+  .object({
+    accessToken: z.string().min(1),
+    refreshToken: z.string().min(1),
+    expiresIn: z.coerce.number().positive().optional(),
+    expiresInSeconds: z.coerce.number().positive().optional(),
+    sessionId: z.union([z.string(), z.number()]).nullish(),
+  })
+  .transform((val) => ({
+    accessToken: val.accessToken,
+    refreshToken: val.refreshToken,
+    expiresIn: Math.round(val.expiresIn ?? val.expiresInSeconds ?? 900),
+    sessionId: val.sessionId != null ? String(val.sessionId) : undefined,
+  }));
 
-const tokenSchema = z.object({
-  accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
-  expiresIn: z.number().int().positive(),
-  sessionId: z.string().optional(),
-});
-
-/** توکن‌ها فقط به کوکی می‌روند؛ بدنه‌ی پاسخ به مرورگر هیچ توکنی ندارد. */
 function splitSession(data: unknown): { tokens: Tokens | null; publicData: unknown } {
   if (data && typeof data === "object") {
     const record = data as Record<string, unknown>;
 
-    // پاسخ ورود با رمز: { requiresOtp, challenge, auth }
-    if ("requiresOtp" in record || "auth" in record) {
-      const auth = tokenSchema.safeParse(record.auth);
+    if ("requiresOtp" in record || "auth" in record || "tokens" in record) {
+      const candidate = record.auth ?? record.tokens ?? record;
+      const auth = rawTokenSchema.safeParse(candidate);
       const rest = { ...record };
       delete rest.auth;
+      delete rest.tokens;
+      delete rest.accessToken;
+      delete rest.refreshToken;
       return { tokens: auth.success ? auth.data : null, publicData: rest };
     }
 
-    // پاسخ تأیید کد: خود AuthResponseDto
-    const direct = tokenSchema.safeParse(record);
+    const direct = rawTokenSchema.safeParse(record);
     if (direct.success) {
       return {
         tokens: direct.data,
@@ -135,7 +137,7 @@ function splitSession(data: unknown): { tokens: Tokens | null; publicData: unkno
   return { tokens: null, publicData: data };
 }
 
-function createSession(result: BackendResult): NextResponse {
+function createSession(request: NextRequest, result: BackendResult): NextResponse {
   if (result.status < 200 || result.status >= 300) return relay(result);
 
   let parsed: unknown;
@@ -146,19 +148,33 @@ function createSession(result: BackendResult): NextResponse {
   }
   if (typeof parsed !== "object" || parsed === null) return badGateway();
 
-  const { tokens, publicData } = splitSession((parsed as { data?: unknown }).data);
+  const envelope = parsed as { isSuccess?: boolean; data?: unknown };
+  const { tokens, publicData } = splitSession(envelope.data);
+
+  // اگر لاگین نهایی بوده (نیاز به OTP نداشته) ولی توکنی استخراج نشده، خطای واضح بده
+  const requiresOtp = publicData && typeof publicData === "object" && (publicData as { requiresOtp?: boolean }).requiresOtp === true;
+  if (envelope.isSuccess !== false && !requiresOtp && !tokens) {
+    console.error("[bff] Login response succeeded but tokens could not be parsed from data:", envelope.data);
+    return fail(502, ApiStatus.ServerError, "Invalid token payload from authentication server");
+  }
 
   const response = NextResponse.json({ ...(parsed as object), data: publicData }, { status: result.status, headers: NO_STORE });
   if (tokens) setSessionCookies(response, tokens);
 
+  if (!request.cookies.get(COOKIE.csrf)?.value) {
+    response.cookies.set(COOKIE.csrf, randomToken(), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+  }
+
   return response;
 }
 
-// ───────────── کمکی‌ها ─────────────
-
 function clientContext(request: NextRequest): ClientContext {
   let clientIp: string | undefined;
-
   if (env.TRUST_PROXY === "1") {
     const candidate = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
     if (candidate && isIP(candidate)) clientIp = candidate;
@@ -177,19 +193,16 @@ type CallInput = ClientContext & {
   body?: string;
 };
 
-// ───────────── مسیرهای عمومی ─────────────
-
-async function handlePublic(rule: Rule, input: CallInput): Promise<NextResponse> {
+async function handlePublic(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
   try {
-    const result = await callBackend(input);
-    return rule.session === "create" ? createSession(result) : relay(result);
+    const access = request.cookies.get(COOKIE.access)?.value;
+    const result = await callBackend({ ...input, accessToken: access });
+    return rule.session === "create" ? createSession(request, result) : relay(result);
   } catch (error) {
     console.error("[bff] upstream error:", error instanceof Error ? error.message : error);
     return badGateway();
   }
 }
-
-// ───────────── مسیرهای نیازمند ورود ─────────────
 
 async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
   const state: { tokens: Tokens | null } = { tokens: null };
@@ -218,7 +231,6 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
 
     let result = await call();
 
-    // access token منقضی/نامعتبر بود: یک‌بار refresh و تکرار.
     if (result.status === 401 && !state.tokens && (await renew())) {
       result = await call();
     }
@@ -235,8 +247,6 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
   }
 }
 
-// ───────────── ورودی اصلی ─────────────
-
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
   const { path: segments } = await context.params;
   const path = segments.join("/");
@@ -245,7 +255,6 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   const rule = rules.find((r) => r.method === method && r.pattern.test(path));
   if (!rule) return fail(404, ApiStatus.NotFound, "Not found");
 
-  // CSRF: Origin درست + توکن double-submit برای هر درخواست تغییردهنده
   if (method !== "GET") {
     if (!isSameOrigin(request)) {
       return fail(403, ApiStatus.Forbidden, "Forbidden");
@@ -281,8 +290,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   }
 
   const input: CallInput = { ...clientContext(request), method, path, search, body };
-
-  return rule.auth ? handleAuthed(request, rule, input) : handlePublic(rule, input);
+  return rule.auth ? handleAuthed(request, rule, input) : handlePublic(request, rule, input);
 }
 
 export const GET = handle;

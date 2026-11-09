@@ -10,7 +10,10 @@ const envelopeSchema = z.object({
 });
 
 function readCookie(name: string): string | null {
-  const entry = document.cookie.split("; ").find((row) => row.startsWith(`${name}=`));
+  const entry = document.cookie
+    .split(";")
+    .map((row) => row.trim())
+    .find((row) => row.startsWith(`${name}=`));
   return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
 }
 
@@ -27,7 +30,6 @@ type RequestOptions<T> = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   query?: Record<string, string | number | boolean | undefined>;
-  /** ساختار مورد انتظار data؛ خروجی سرور قبل از استفاده اعتبارسنجی می‌شود. */
   schema: z.ZodType<T>;
 };
 
@@ -39,8 +41,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions<T>): P
 
   if (method !== "GET") {
     const csrf = readCookie(COOKIE.csrf);
-    if (!csrf) throw new ApiError(ApiStatus.Forbidden);
-    headers[CSRF_HEADER] = csrf;
+    if (csrf) {
+      headers[CSRF_HEADER] = csrf;
+    }
   }
 
   const params = new URLSearchParams();
@@ -68,8 +71,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions<T>): P
   }
 
   if (response.status === 403) {
-    const locale = document.documentElement.lang || "fa";
-    if (!window.location.pathname.endsWith("/forbidden")) window.location.assign(`/${locale}/forbidden`);
     throw new ApiError(ApiStatus.Forbidden);
   }
 
@@ -95,7 +96,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions<T>): P
   if (!envelope.success) throw new ApiError(ApiStatus.ServerError);
 
   const data = options.schema.safeParse(envelope.data.data);
-  if (!data.success) throw new ApiError(ApiStatus.ServerError);
+  if (!data.success) {
+    console.error(`[apiRequest] Zod validation failed on "${path}":`, data.error.issues, "Payload:", envelope.data.data);
+    throw new ApiError(ApiStatus.ServerError, envelope.data.message ?? "");
+  }
 
   return data.data;
 }
