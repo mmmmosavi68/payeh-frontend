@@ -12,10 +12,12 @@ export type UserRecord = {
   isActive: boolean;
   createdAt: string;
   lastLoginAt: string | null;
+  phoneNumberConfirmed?: boolean | null;
+  expireDate?: string | null;
 };
 
 /** فیلدهای مرتب‌سازی که API پشتیبانی می‌کند. */
-export type UserSort = "userName" | "createdDate" | "lastLoginDate";
+export type UserSort = "userName" | "createdDate" | "lastLoginDate" | "email";
 
 export type UserQuery = {
   page: number;

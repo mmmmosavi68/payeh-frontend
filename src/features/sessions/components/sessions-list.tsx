@@ -6,15 +6,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState, ErrorState } from "@/components/shared/data-states";
-import { SampleNotice } from "@/components/shared/sample-notice";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRemoteData } from "@/hooks/use-remote-data";
-import {
-  listSessions,
-  revokeOtherSessions,
-  revokeSession,
-} from "@/lib/mock/sessions";
+import { listSessions, revokeOtherSessions, revokeSession } from "@/features/sessions/api";
 import type { SessionRecord } from "@/types/session";
 
 const deviceIcons = {
@@ -50,7 +46,6 @@ export function SessionsList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SampleNotice />
 
       <div className="flex justify-end">
         <Button
@@ -128,6 +123,7 @@ export function SessionsList() {
                           }),
                         })}
                       </p>
+                      {session.refreshTokenExpireAt ? <p className="text-xs text-muted-foreground">{t("expiresAt", { date: format.dateTime(new Date(session.refreshTokenExpireAt), { dateStyle: "medium", timeStyle: "short" }) })}</p> : null}
                     </div>
 
                     {!session.current ? (

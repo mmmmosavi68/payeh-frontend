@@ -10,9 +10,7 @@ const envelopeSchema = z.object({
 });
 
 function readCookie(name: string): string | null {
-  const entry = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${name}=`));
+  const entry = document.cookie.split("; ").find((row) => row.startsWith(`${name}=`));
   return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
 }
 
@@ -22,9 +20,7 @@ function redirectToLogin() {
 
   const locale = document.documentElement.lang || "fa";
   const rest = pathname.replace(/^\/(fa|en)(?=\/|$)/, "") || "/";
-  window.location.assign(
-    `/${locale}/login?returnUrl=${encodeURIComponent(rest + search)}`,
-  );
+  window.location.assign(`/${locale}/login?returnUrl=${encodeURIComponent(rest + search)}`);
 }
 
 type RequestOptions<T> = {
@@ -35,10 +31,7 @@ type RequestOptions<T> = {
   schema: z.ZodType<T>;
 };
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions<T>,
-): Promise<T> {
+export async function apiRequest<T>(path: string, options: RequestOptions<T>): Promise<T> {
   const method = options.method ?? "GET";
   const headers: Record<string, string> = { Accept: "application/json" };
 
@@ -58,24 +51,26 @@ export async function apiRequest<T>(
 
   let response: Response;
   try {
-    response = await fetch(
-      `/api/bff/${path}${queryString ? `?${queryString}` : ""}`,
-      {
-        method,
-        headers,
-        body:
-          options.body === undefined ? undefined : JSON.stringify(options.body),
-        credentials: "same-origin",
-        cache: "no-store",
-      },
-    );
+    response = await fetch(`/api/bff/${path}${queryString ? `?${queryString}` : ""}`, {
+      method,
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      credentials: "same-origin",
+      cache: "no-store",
+    });
   } catch {
-    throw new ApiError(ApiStatus.ServerError);
+    throw new ApiError(ApiStatus.ServerError, "", "network");
   }
 
   if (response.status === 401) {
     redirectToLogin();
     throw new ApiError(ApiStatus.UnAuthorized);
+  }
+
+  if (response.status === 403) {
+    const locale = document.documentElement.lang || "fa";
+    if (!window.location.pathname.endsWith("/forbidden")) window.location.assign(`/${locale}/forbidden`);
+    throw new ApiError(ApiStatus.Forbidden);
   }
 
   if (response.status === 204) {
@@ -94,10 +89,7 @@ export async function apiRequest<T>(
   const envelope = envelopeSchema.safeParse(json);
 
   if (!response.ok || (envelope.success && !envelope.data.isSuccess)) {
-    throw new ApiError(
-      envelope.success ? envelope.data.statusCode : ApiStatus.ServerError,
-      envelope.success ? (envelope.data.message ?? "") : "",
-    );
+    throw new ApiError(envelope.success ? envelope.data.statusCode : ApiStatus.ServerError, envelope.success ? (envelope.data.message ?? "") : "");
   }
 
   if (!envelope.success) throw new ApiError(ApiStatus.ServerError);

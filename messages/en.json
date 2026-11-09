@@ -35,9 +35,11 @@
     "items": {
       "dashboard": "Dashboard",
       "users": "Users",
-      "sessions": "Sessions"
+      "sessions": "Sessions",
+      "auditLogs": "Audit logs"
     },
-    "placeholder": "This page will be built in a later step."
+    "placeholder": "This page will be built in a later step.",
+    "retry": "Retry"
   },
   "user": {
     "menu": "User menu",
@@ -146,7 +148,8 @@
       "status": "Status",
       "lastLogin": "Last sign-in",
       "createdAt": "Created",
-      "actions": "Actions"
+      "actions": "Actions",
+      "email": "Email"
     },
     "status": {
       "active": "Active",
@@ -240,6 +243,11 @@
     "toast": {
       "revoked": "Session ended",
       "revokedOthers": "Signed out of other devices"
-    }
+    },
+    "expiresAt": "Session expires: {date}"
+  },
+  "auditLogs": {
+    "title": "Audit logs",
+    "description": "Search and review recorded system events"
   }
 }

@@ -23,10 +23,10 @@ export function buildCsp(nonce: string, isDev: boolean): string {
     "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(isDev ? ["'unsafe-eval'"] : [])],
     // استایل inline برای Radix/Tailwind و کپچا لازم است؛ ریسک آن بسیار کمتر از اسکریپت inline است.
     "style-src": ["'self'", "'unsafe-inline'"],
-    "img-src": ["'self'", "data:", "blob:", "https://www.gstatic.com", "https://www.recaptcha.net"],
+    "img-src": ["'self'", "data:", "blob:"],
     "font-src": ["'self'", "data:"],
-    "connect-src": ["'self'", "https://www.recaptcha.net", "https://www.google.com", ...(isDev ? ["ws:", "wss:"] : [])],
-    "frame-src": ["https://www.recaptcha.net", "https://www.google.com", "https://recaptcha.google.com"],
+    "connect-src": ["'self'", ...(isDev ? ["ws:", "wss:"] : [])],
+    "frame-src": ["'none'"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],

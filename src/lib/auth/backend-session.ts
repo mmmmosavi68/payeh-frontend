@@ -34,15 +34,14 @@ function prune(now: number) {
   }
 }
 
-async function requestRefresh(
-  refreshToken: string,
-  context: ClientContext,
-): Promise<Tokens | null> {
+async function requestRefresh(refreshToken: string, context: ClientContext): Promise<Tokens | null> {
   const result = await callBackend({
+    // فقط IP و User-Agent کلاینت از context می‌آید؛ مسیر و متد همیشه مال refresh است.
+    clientIp: context.clientIp,
+    userAgent: context.userAgent,
     method: "POST",
     path: "Auth/refresh",
     body: JSON.stringify({ refreshToken }),
-    ...context,
   });
 
   // رد قطعی توکن: نشست تمام شده است.
@@ -58,10 +57,7 @@ async function requestRefresh(
   return parsed.data.data;
 }
 
-export function refreshTokens(
-  refreshToken: string,
-  context: ClientContext,
-): Promise<Tokens | null> {
+export function refreshTokens(refreshToken: string, context: ClientContext): Promise<Tokens | null> {
   const now = Date.now();
   prune(now);
 

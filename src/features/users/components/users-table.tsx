@@ -44,15 +44,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getMe } from "@/features/auth/me";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { getMe } from "@/features/auth/me";
 import { useRemoteData } from "@/hooks/use-remote-data";
 import { localeDirections } from "@/i18n/routing";
 import { ApiError, ApiStatus } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import type { UserQuery, UserRecord, UserSort } from "@/types/user";
-import { deleteUser, listRoles, listUsers } from "../api";
+import { deleteUser, getUserById, listRoles, listUsers } from "../api";
 import { UserFormDialog } from "./user-form-dialog";
+import { usePermission } from "@/features/permissions/use-permission";
 
 const PAGE_SIZE = 10;
 
@@ -118,11 +119,12 @@ type RowActionsProps = {
   user: UserRecord;
   dir: "rtl" | "ltr";
   canDelete: boolean;
+  canUpdate: boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
 
-function RowActions({ user, dir, canDelete, onEdit, onDelete }: RowActionsProps) {
+function RowActions({ user, dir, canDelete, canUpdate, onEdit, onDelete }: RowActionsProps) {
   const t = useTranslations("common");
 
   return (
@@ -138,10 +140,10 @@ function RowActions({ user, dir, canDelete, onEdit, onDelete }: RowActionsProps)
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onEdit}>
+        {canUpdate ? <DropdownMenuItem onSelect={onEdit}>
           <Pencil className="size-4" aria-hidden />
           {t("edit")}
-        </DropdownMenuItem>
+        </DropdownMenuItem> : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onSelect={onDelete}>
             <Trash2 className="size-4" aria-hidden />
@@ -186,6 +188,9 @@ export function UsersTable() {
   const format = useFormatter();
   const locale = useLocale();
   const dir = localeDirections[locale] ?? "ltr";
+  const createPermission = usePermission("Users", "Create");
+  const updatePermission = usePermission("Users", "Update");
+  const deletePermission = usePermission("Users", "Delete");
 
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput, 300);
@@ -209,12 +214,12 @@ export function UsersTable() {
     JSON.stringify(query),
     () => listUsers(query),
   );
+  const { data: me } = useRemoteData("me", getMe);
   const {
     data: roles,
     failed: rolesFailed,
     reload: reloadRoles,
   } = useRemoteData("roles", listRoles);
-  const { data: me } = useRemoteData("me", getMe);
 
   const isForbidden =
     error instanceof ApiError && error.status === ApiStatus.Forbidden;
@@ -240,9 +245,14 @@ export function UsersTable() {
     setFormOpen(true);
   }
 
-  function openEdit(user: UserRecord) {
-    setFormUser(user);
-    setFormOpen(true);
+  async function openEdit(user: UserRecord) {
+    try {
+      const details = await getUserById(user.id);
+      setFormUser(details);
+      setFormOpen(true);
+    } catch {
+      toast.error(locale === "fa" ? "دریافت جزئیات کاربر ناموفق بود." : "Could not load user details.");
+    }
   }
 
   function openDelete(user: UserRecord) {
@@ -344,7 +354,7 @@ export function UsersTable() {
           </SelectContent>
         </Select>
 
-        <Button className="rounded-full" onClick={openCreate}>
+        <Button className="rounded-full" onClick={openCreate} disabled={createPermission.loading || !createPermission.allowed}>
           <Plus className="size-4" aria-hidden />
           {t("add")}
         </Button>
@@ -395,6 +405,7 @@ export function UsersTable() {
                     />
                   </TableHead>
                   <TableHead>{t("columns.phone")}</TableHead>
+                  <TableHead aria-sort={ariaSort(sort === "email", sortDir)}><SortHead label={t("columns.email")} active={sort === "email"} dir={sortDir} onClick={() => toggleSort("email")} /></TableHead>
                   <TableHead>{t("columns.roles")}</TableHead>
                   <TableHead>{t("columns.status")}</TableHead>
                   <TableHead aria-sort={ariaSort(sort === "lastLoginDate", sortDir)}>
@@ -422,7 +433,7 @@ export function UsersTable() {
                 {showSkeleton
                   ? Array.from({ length: 5 }, (_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }, (_, cell) => (
+                        {Array.from({ length: 8 }, (_, cell) => (
                           <TableCell key={cell}>
                             <Skeleton className="h-5 w-full max-w-32" />
                           </TableCell>
@@ -437,6 +448,7 @@ export function UsersTable() {
                         <TableCell>
                           <span dir="ltr">{user.phone}</span>
                         </TableCell>
+                        <TableCell><span dir="ltr" className="text-sm">{user.email || "—"}</span></TableCell>
                         <TableCell>
                           <RoleBadges roles={user.roles} />
                         </TableCell>
@@ -453,8 +465,9 @@ export function UsersTable() {
                           <RowActions
                             user={user}
                             dir={dir}
-                            canDelete={user.id !== me?.id}
-                            onEdit={() => openEdit(user)}
+                            canDelete={deletePermission.allowed && user.id !== me?.id}
+                        canUpdate={updatePermission.allowed}
+                            onEdit={() => { void openEdit(user); }}
                             onDelete={() => openDelete(user)}
                           />
                         </TableCell>
@@ -486,8 +499,9 @@ export function UsersTable() {
                       <RowActions
                         user={user}
                         dir={dir}
-                        canDelete={user.id !== me?.id}
-                        onEdit={() => openEdit(user)}
+                        canDelete={deletePermission.allowed && user.id !== me?.id}
+                        canUpdate={updatePermission.allowed}
+                        onEdit={() => { void openEdit(user); }}
                         onDelete={() => openDelete(user)}
                       />
                     </div>

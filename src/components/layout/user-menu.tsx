@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   DropdownMenu,
@@ -13,6 +13,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMe, type Me } from "@/features/auth/me";
 import { useLogout } from "@/features/auth/use-logout";
+import { logoutAll } from "@/features/auth/api";
+import { toast } from "sonner";
 import { useRemoteData } from "@/hooks/use-remote-data";
 
 function displayName(me: Me): string {
@@ -32,6 +34,11 @@ export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
   const tc = useTranslations("common");
   const locale = useLocale();
   const handleLogout = useLogout();
+  async function handleLogoutAll() {
+    try { await logoutAll(); } catch { /* BFF clears the local session on logout-all. */ }
+    toast.success(locale === "fa" ? "از همه دستگاه‌ها خارج شدید." : "Signed out from all devices.");
+    window.location.assign(`/${locale}/login`);
+  }
   const { data: me } = useRemoteData("me", getMe);
 
   const roles = me
@@ -81,6 +88,10 @@ export function UserMenu({ dir }: { dir: "rtl" | "ltr" }) {
         <DropdownMenuItem onSelect={() => void handleLogout()}>
           <LogOut className="size-4" aria-hidden />
           {tc("logout")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void handleLogoutAll()}>
+          <ShieldAlert className="size-4" aria-hidden />
+          {locale === "fa" ? "خروج از همه دستگاه‌ها" : "Sign out all devices"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

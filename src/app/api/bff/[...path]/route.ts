@@ -1,11 +1,7 @@
 import { isIP } from "node:net";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import {
-  callBackend,
-  type BackendResult,
-  type ClientContext,
-} from "@/lib/api/backend";
+import { callBackend, type BackendResult, type ClientContext } from "@/lib/api/backend";
 import { ApiStatus } from "@/lib/api/errors";
 import { refreshTokens, type Tokens } from "@/lib/auth/backend-session";
 import { COOKIE, CSRF_HEADER } from "@/lib/auth/cookie-names";
@@ -38,6 +34,7 @@ const GUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
  */
 const rules: Rule[] = [
   { method: "GET", pattern: /^auth\/config$/i, auth: false, session: "none" },
+  { method: "GET", pattern: /^auth\/captcha$/i, auth: false, session: "none" },
   { method: "POST", pattern: /^auth\/otp\/request$/i, auth: false, session: "none" },
   { method: "POST", pattern: /^auth\/otp\/verify$/i, auth: false, session: "create" },
   { method: "POST", pattern: /^auth\/login$/i, auth: false, session: "create" },
@@ -49,6 +46,10 @@ const rules: Rule[] = [
   { method: "GET", pattern: /^auth\/sessions$/i, auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^auth/sessions/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "GET", pattern: /^roles$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^permissions\/me$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^auditlogs$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^home\/Test$/i, auth: false, session: "none" },
+  { method: "POST", pattern: /^home\/Test$/i, auth: false, session: "none" },
   { method: "GET", pattern: /^users$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^users$/i, auth: true, session: "none" },
   { method: "GET", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
@@ -59,10 +60,7 @@ const rules: Rule[] = [
 // ───────────── پاسخ‌ها ─────────────
 
 function fail(httpStatus: number, statusCode: number, message: string) {
-  return NextResponse.json(
-    { isSuccess: false, statusCode, message },
-    { status: httpStatus, headers: NO_STORE },
-  );
+  return NextResponse.json({ isSuccess: false, statusCode, message }, { status: httpStatus, headers: NO_STORE });
 }
 
 function unauthorized() {
@@ -72,10 +70,7 @@ function unauthorized() {
 }
 
 function loggedOut() {
-  const response = NextResponse.json(
-    { isSuccess: true, statusCode: ApiStatus.Success, message: "" },
-    { headers: NO_STORE },
-  );
+  const response = NextResponse.json({ isSuccess: true, statusCode: ApiStatus.Success, message: "" }, { headers: NO_STORE });
   clearSessionCookies(response);
   return response;
 }
@@ -153,10 +148,7 @@ function createSession(result: BackendResult): NextResponse {
 
   const { tokens, publicData } = splitSession((parsed as { data?: unknown }).data);
 
-  const response = NextResponse.json(
-    { ...(parsed as object), data: publicData },
-    { status: result.status, headers: NO_STORE },
-  );
+  const response = NextResponse.json({ ...(parsed as object), data: publicData }, { status: result.status, headers: NO_STORE });
   if (tokens) setSessionCookies(response, tokens);
 
   return response;
@@ -199,18 +191,17 @@ async function handlePublic(rule: Rule, input: CallInput): Promise<NextResponse>
 
 // ───────────── مسیرهای نیازمند ورود ─────────────
 
-async function handleAuthed(
-  request: NextRequest,
-  rule: Rule,
-  input: CallInput,
-): Promise<NextResponse> {
+async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
   const state: { tokens: Tokens | null } = { tokens: null };
   let access = request.cookies.get(COOKIE.access)?.value;
   const refresh = request.cookies.get(COOKIE.refresh)?.value;
 
   const renew = async (): Promise<boolean> => {
     if (!refresh) return false;
-    const tokens = await refreshTokens(refresh, input);
+    const tokens = await refreshTokens(refresh, {
+      clientIp: input.clientIp,
+      userAgent: input.userAgent,
+    });
     if (!tokens) return false;
     state.tokens = tokens;
     access = tokens.accessToken;
@@ -246,10 +237,7 @@ async function handleAuthed(
 
 // ───────────── ورودی اصلی ─────────────
 
-async function handle(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> },
-): Promise<NextResponse> {
+async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
   const { path: segments } = await context.params;
   const path = segments.join("/");
   const method = request.method as Method;
@@ -294,9 +282,7 @@ async function handle(
 
   const input: CallInput = { ...clientContext(request), method, path, search, body };
 
-  return rule.auth
-    ? handleAuthed(request, rule, input)
-    : handlePublic(rule, input);
+  return rule.auth ? handleAuthed(request, rule, input) : handlePublic(rule, input);
 }
 
 export const GET = handle;

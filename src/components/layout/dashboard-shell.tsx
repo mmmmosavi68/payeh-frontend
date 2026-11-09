@@ -19,6 +19,7 @@ import { Brand } from "./brand";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
 import { useLogout } from "@/features/auth/use-logout";
+import { PermissionProvider } from "@/features/permissions/permission-provider";
 
 type LogoutLinkProps = {
   collapsed?: boolean;
@@ -61,6 +62,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const year = format.number(new Date().getFullYear(), { useGrouping: false });
 
   return (
+    <PermissionProvider>
     <div className="min-h-dvh bg-background">
       <a
         href="#main-content"
@@ -157,5 +159,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </footer>
       </main>
     </div>
+    </PermissionProvider>
   );
 }

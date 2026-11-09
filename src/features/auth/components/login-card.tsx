@@ -1,10 +1,10 @@
+
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRemoteData } from "@/hooks/use-remote-data";
 import { useRouter } from "@/i18n/navigation";
 import { localeDirections } from "@/i18n/routing";
@@ -26,22 +26,22 @@ export function LoginCard() {
     "auth-config",
     getAuthConfig,
   );
+
   const [tab, setTab] = useState<Method>("mobile");
 
   const methods: Method[] = [];
+
   if (config?.mobileLoginEnabled) methods.push("mobile");
   if (config?.passwordLoginEnabled) methods.push("password");
-  const active = methods.includes(tab) ? tab : methods[0];
 
-  // const done = () => router.replace("/dashboard");
+  const active: Method = methods.includes(tab)
+    ? tab
+    : methods[0] ?? "mobile";
+
   const done = () => {
     const raw = new URLSearchParams(window.location.search).get("returnUrl");
-    console.log(raw)
-        console.log("asdasdasd")
-
     router.replace(safeReturnUrl(raw));
   };
-
 
   let body: React.ReactNode;
 
@@ -49,7 +49,12 @@ export function LoginCard() {
     body = (
       <div role="alert" className="flex flex-col items-center gap-3 text-center">
         <p className="text-sm text-destructive">{t("loadFailed")}</p>
-        <Button variant="outline" className="rounded-full" onClick={reload}>
+
+        <Button
+          variant="outline"
+          className="rounded-full"
+          onClick={reload}
+        >
           {tc("retry")}
         </Button>
       </div>
@@ -57,7 +62,7 @@ export function LoginCard() {
   } else if (!config) {
     body = (
       <div className="flex flex-col gap-4" aria-busy>
-        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-12 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full rounded-full" />
       </div>
@@ -77,27 +82,63 @@ export function LoginCard() {
       );
   } else {
     body = (
-      <Tabs
-        value={active}
-        onValueChange={(value) => setTab(value as Method)}
-        dir={dir}
-      >
-        <TabsList className="grid h-auto w-full grid-cols-2">
-          <TabsTrigger value="mobile" className="py-2">
+      <div className="flex flex-col gap-5" dir={dir}>
+        {/* Login method selector */}
+        <div
+          role="tablist"
+          aria-label={t("title")}
+          className="grid w-full grid-cols-2 gap-3"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={active === "mobile"}
+            aria-controls="login-method-panel"
+            onClick={() => setTab("mobile")}
+            className={[
+              "flex min-h-12 items-center justify-center rounded-xl border px-3 py-3",
+              "text-sm font-semibold transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              active === "mobile"
+                ? "border-primary bg-primary/10 text-primary shadow-sm"
+                : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted",
+            ].join(" ")}
+          >
             {t("tabs.mobile")}
-          </TabsTrigger>
-          <TabsTrigger value="password" className="py-2">
-            {t("tabs.password")}
-          </TabsTrigger>
-        </TabsList>
+          </button>
 
-        <TabsContent value="mobile" className="mt-5">
-          <MobileLogin config={config} onDone={done} />
-        </TabsContent>
-        <TabsContent value="password" className="mt-5">
-          <PasswordLogin config={config} onDone={done} />
-        </TabsContent>
-      </Tabs>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={active === "password"}
+            aria-controls="login-method-panel"
+            onClick={() => setTab("password")}
+            className={[
+              "flex min-h-12 items-center justify-center rounded-xl border px-3 py-3",
+              "text-sm font-semibold transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              active === "password"
+                ? "border-primary bg-primary/10 text-primary shadow-sm"
+                : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted",
+            ].join(" ")}
+          >
+            {t("tabs.password")}
+          </button>
+        </div>
+
+        {/* Selected login form */}
+        <div
+          id="login-method-panel"
+          role="tabpanel"
+          className="w-full min-w-0"
+        >
+          {active === "mobile" ? (
+            <MobileLogin config={config} onDone={done} />
+          ) : (
+            <PasswordLogin config={config} onDone={done} />
+          )}
+        </div>
+      </div>
     );
   }
 
@@ -110,8 +151,12 @@ export function LoginCard() {
           <span className="mb-4 grid size-14 place-items-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground">
             {tc("brandMark")}
           </span>
+
           <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t("subtitle")}</p>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("subtitle")}
+          </p>
         </div>
 
         {body}

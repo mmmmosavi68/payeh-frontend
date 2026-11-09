@@ -16,6 +16,8 @@ const userSchema = z.object({
   userName: z.string(),
   emailAddress: z.string().nullish(),
   phoneNumber: z.string().nullish(),
+  phoneNumberConfirmed: z.boolean().nullable().optional(),
+  expireDate: z.string().optional(),
   isActive: z.boolean(),
   createdDate: z.string(),
   lastLoginDate: z.string().nullish(),
@@ -45,6 +47,8 @@ function toRecord(user: z.infer<typeof userSchema>): UserRecord {
     isActive: user.isActive,
     createdAt: parseApiDate(user.createdDate).toISOString(),
     lastLoginAt: user.lastLoginDate ? parseApiDate(user.lastLoginDate).toISOString() : null,
+    phoneNumberConfirmed: user.phoneNumberConfirmed ?? null,
+    expireDate: user.expireDate ? parseApiDate(user.expireDate).toISOString() : null,
   };
 }
 
@@ -68,6 +72,12 @@ export async function listUsers(query: UserQuery): Promise<PagedResult<UserRecor
     page: data.pageNumber,
     pageSize: data.pageSize,
   };
+}
+
+
+export async function getUserById(id: string): Promise<UserRecord> {
+  const user = await apiRequest(`users/${id}`, { schema: userSchema });
+  return toRecord(user);
 }
 
 export async function createUser(input: CreateUserInput): Promise<UserRecord> {

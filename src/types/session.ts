@@ -5,5 +5,6 @@ export type SessionRecord = {
   ip: string;
   createdAt: string;
   lastActiveAt: string;
+  refreshTokenExpireAt?: string;
   current: boolean;
 };

@@ -10,6 +10,7 @@ const sessionSchema = z.object({
   ipAddress: z.string().nullish(),
   createdDate: z.string(),
   lastUsedAt: z.string().nullish(),
+  refreshTokenExpireDate: z.string(),
   isCurrent: z.boolean(),
 });
 
@@ -39,6 +40,7 @@ export async function listSessions(): Promise<SessionRecord[]> {
         ip: item.ipAddress || "—",
         createdAt: createdAt.toISOString(),
         lastActiveAt: lastActiveAt.toISOString(),
+        refreshTokenExpireAt: parseApiDate(item.refreshTokenExpireDate).toISOString(),
         current: item.isCurrent,
       } satisfies SessionRecord;
     })

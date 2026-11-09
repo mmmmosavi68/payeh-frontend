@@ -1,6 +1,6 @@
 import { routing } from "@/i18n/routing";
 
-const ALLOWED_PREFIXES = ["/dashboard", "/users", "/sessions"];
+const ALLOWED_PREFIXES = ["/dashboard", "/users", "/sessions", "/audit-logs", "/api-test"];
 const localePattern = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`);
 
 /**
