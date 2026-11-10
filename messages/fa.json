@@ -248,6 +248,75 @@
   },
   "auditLogs": {
     "title": "گزارش سوابق ممیزی",
-    "description": "جستجو و بررسی رویدادهای ثبت‌شده در سامانه"
+    "description": "جستجو و بررسی رویدادهای ثبت‌شده در سامانه",
+    "searchPlaceholder": "جستجو بر اساس کاربر، عملیات یا مسیر",
+    "export": "خروجی CSV",
+    "exportSuccess": "فایل گزارش ممیزی با موفقیت دریافت شد.",
+    "copy": "کپی",
+    "copySuccess": "اطلاعات با موفقیت کپی شد.",
+    "copyFailed": "کپی اطلاعات ناموفق بود.",
+    "detailsButton": "مشاهده جزئیات",
+    "retry": "تلاش دوباره",
+    "total": "تعداد کل رویدادها: {count}",
+    "previous": "قبلی",
+    "next": "بعدی",
+    "noRecords": "هیچ رویدادی برای نمایش وجود ندارد.",
+    "loadFailed": "بارگذاری گزارش‌های ممیزی ناموفق بود.",
+    "eventTypes": {
+      "activity": "فعالیت",
+      "security": "امنیتی",
+      "request": "درخواست"
+    },
+    "filters": {
+      "allEvents": "همه رویدادها",
+      "username": "نام کاربر",
+      "userId": "شناسه کاربر",
+      "ipAddress": "آدرس IP",
+      "action": "عملیات",
+      "entityName": "نام موجودیت",
+      "entityId": "شناسه موجودیت",
+      "statusCode": "کد وضعیت HTTP",
+      "fromUtc": "از تاریخ",
+      "toUtc": "تا تاریخ"
+    },
+    "columns": {
+      "time": "زمان",
+      "type": "نوع رویداد",
+      "action": "عملیات",
+      "user": "کاربر",
+      "ip": "آدرس IP",
+      "status": "وضعیت HTTP",
+      "path": "مسیر",
+      "details": "جزئیات"
+    },
+    "details": {
+      "title": "جزئیات رویداد ممیزی",
+      "generalInfo": "اطلاعات عمومی",
+      "eventType": "نوع رویداد",
+      "action": "عملیات",
+      "user": "کاربر",
+      "userId": "شناسه کاربر",
+      "time": "زمان وقوع",
+      "ipAddress": "آدرس IP",
+      "entity": "نام موجودیت",
+      "entityId": "شناسه موجودیت",
+      "description": "توضیحات",
+      "httpInfo": "اطلاعات درخواست",
+      "httpMethod": "متد HTTP",
+      "path": "مسیر درخواست",
+      "statusCode": "کد وضعیت",
+      "duration": "مدت زمان (میلی‌ثانیه)",
+      "correlationId": "شناسه پیگیری",
+      "userAgent": "مرورگر و دستگاه",
+      "changes": "تغییرات اطلاعات",
+      "oldValues": "مقادیر قبلی",
+      "newValues": "مقادیر جدید",
+      "noData": "اطلاعاتی ثبت نشده است",
+      "logId": "شناسه گزارش",
+      "close": "بستن"
+    },
+    "pagination": {
+      "page": "صفحه {page} از {pages}"
+    }
   }
 }

@@ -1,33 +1,33 @@
 {
   "common": {
-    "appName": "Payeh System",
-    "brandMark": "P",
+    "appName": "Base System",
+    "brandMark": "B",
     "otherLanguage": "فارسی",
-    "switchLanguage": "Switch language",
-    "toggleTheme": "Toggle theme",
-    "openMenu": "Open menu",
-    "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar",
-    "menuTitle": "Main menu",
-    "menuDescription": "Navigate between sections of the system",
-    "skipToContent": "Skip to main content",
-    "logout": "Logout",
+    "switchLanguage": "Switch Language",
+    "toggleTheme": "Toggle Theme",
+    "openMenu": "Open Menu",
+    "collapseSidebar": "Collapse Sidebar",
+    "expandSidebar": "Expand Sidebar",
+    "menuTitle": "Main Menu",
+    "menuDescription": "Navigate through the application",
+    "skipToContent": "Skip to Main Content",
+    "logout": "Log Out",
     "home": "Home",
     "breadcrumb": "Breadcrumb",
-    "sampleNotice": "The data on this page is sample data and will be replaced once the API is connected.",
+    "sampleNotice": "This page contains sample data that will be replaced after connecting to the API.",
     "cancel": "Cancel",
     "save": "Save",
     "create": "Create",
     "delete": "Delete",
     "edit": "Edit",
-    "retry": "Try again",
+    "retry": "Retry",
     "actions": "Actions",
     "previous": "Previous",
     "next": "Next",
     "operationFailed": "The operation failed. Please try again."
   },
   "nav": {
-    "label": "Main navigation",
+    "label": "Main Navigation",
     "sections": {
       "main": "Main",
       "management": "Management"
@@ -36,102 +36,102 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "sessions": "Sessions",
-      "auditLogs": "Audit logs"
+      "auditLogs": "Audit Logs"
     },
-    "placeholder": "This page will be built in a later step.",
+    "placeholder": "This page will be developed in a future update.",
     "retry": "Retry"
   },
   "user": {
-    "menu": "User menu",
+    "menu": "User Menu",
     "initials": "AD",
-    "demoName": "Administrator",
-    "demoRole": "Full access"
+    "demoName": "System Administrator",
+    "demoRole": "Full Access"
   },
   "footer": {
     "rights": "© {year} {name}. All rights reserved."
   },
   "auth": {
-    "title": "Welcome back",
+    "title": "Welcome",
     "subtitle": "Sign in to your account to continue",
     "tabs": {
-      "mobile": "Sign in with mobile",
-      "password": "Sign in with username"
+      "mobile": "Sign in with Mobile Number",
+      "password": "Sign in with Username and Password"
     },
-    "mobile": "Mobile number",
+    "mobile": "Mobile Number",
     "mobilePlaceholder": "09123456789",
-    "sendCode": "Send verification code",
+    "sendCode": "Send Verification Code",
     "sendingCode": "Sending...",
     "username": "Username",
     "usernamePlaceholder": "Enter your username",
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
-    "showPassword": "Show password",
-    "hidePassword": "Hide password",
-    "signIn": "Sign in",
-    "signingIn": "Signing in...",
-    "loadFailed": "Could not load the sign-in settings.",
-    "noMethods": "No sign-in method is enabled; contact your administrator.",
-    "demoHint": "Demo mode (sample data): the verification code is 123456 and the password wrong fails.",
+    "showPassword": "Show Password",
+    "hidePassword": "Hide Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing In...",
+    "loadFailed": "Failed to load authentication settings.",
+    "noMethods": "No sign-in methods are enabled. Please contact the system administrator.",
+    "demoHint": "Demo version (mock data): The verification code is 123456. The password wrong will return an error.",
     "validation": {
-      "mobileRequired": "Enter your mobile number",
+      "mobileRequired": "Please enter your mobile number",
       "mobileInvalid": "Invalid mobile number (e.g. 09123456789)",
-      "usernameRequired": "Enter your username",
-      "passwordRequired": "Enter your password",
-      "otpInvalid": "The verification code must be {length} digits"
+      "usernameRequired": "Please enter your username",
+      "passwordRequired": "Please enter your password",
+      "otpInvalid": "The verification code must contain {length} digits"
     },
     "otp": {
-      "title": "Verify your identity",
+      "title": "Identity Verification",
       "sentTo": "A verification code was sent to {phone}",
-      "code": "Verification code",
-      "verify": "Verify and sign in",
+      "code": "Verification Code",
+      "verify": "Verify and Sign In",
       "verifying": "Verifying...",
-      "resendIn": "Resend code in {seconds}s",
-      "resend": "Resend code",
+      "resendIn": "Resend available in {seconds} seconds",
+      "resend": "Resend Code",
       "back": "Back"
     },
     "errors": {
-      "captchaRequired": "Please complete the security check (captcha).",
-      "captchaInvalid": "The security check is invalid or expired; please try again.",
+      "captchaRequired": "Please complete the security verification (CAPTCHA).",
+      "captchaInvalid": "The security verification is invalid or expired. Please try again.",
       "invalidCredentials": "Incorrect username or password.",
-      "invalidOtp": "The code is incorrect or has expired.",
-      "tooManyRequests": "Too many attempts; please try again later.",
+      "invalidOtp": "The entered code is incorrect or has expired.",
+      "tooManyRequests": "Too many attempts. Please try again later.",
       "forbidden": "This sign-in method is disabled.",
-      "generic": "Something went wrong. Please try again."
+      "generic": "An error occurred. Please try again."
     },
     "captcha": {
-      "label": "Security check",
-      "loadFailed": "Could not load the captcha; check your connection or VPN.",
-      "notConfigured": "The captcha site key is not configured on the server."
+      "label": "Security Verification",
+      "loadFailed": "Failed to load CAPTCHA. Please check your internet connection or VPN.",
+      "notConfigured": "The CAPTCHA key is not configured on the server."
     }
   },
   "dashboard": {
     "title": "Overview",
     "description": "A summary of the system status",
-    "sampleNotice": "The data on this page is sample data and will be replaced once the API is connected.",
+    "sampleNotice": "This page contains sample data that will be replaced after connecting to the API.",
     "stats": {
-      "totalUsers": "Total users",
-      "activeSessions": "Active sessions",
+      "totalUsers": "Total Users",
+      "activeSessions": "Active Sessions",
       "roles": "Roles",
-      "failedLogins": "Failed sign-ins"
+      "failedLogins": "Failed Logins"
     },
-    "vsLastWeek": "vs last week",
+    "vsLastWeek": "Compared to last week",
     "recent": {
-      "title": "Recent sign-ins",
-      "description": "Latest attempts to sign in to the system",
-      "success": "Success",
+      "title": "Recent Sign-ins",
+      "description": "The latest sign-in attempts",
+      "success": "Successful",
       "failed": "Failed"
     }
   },
   "roles": {
-    "admin": "Administrator",
+    "admin": "System Administrator",
     "supervisor": "Supervisor",
     "operator": "Operator"
   },
   "users": {
     "title": "Users",
     "description": "Manage system users and accounts",
-    "add": "Add user",
-    "searchPlaceholder": "Search by name, username, phone or email",
+    "add": "Add User",
+    "searchPlaceholder": "Search by name, username, mobile number, or email",
     "never": "Never signed in",
     "filters": {
       "status": "Status",
@@ -139,15 +139,15 @@
       "active": "Active",
       "inactive": "Inactive",
       "role": "Role",
-      "allRoles": "All roles"
+      "allRoles": "All Roles"
     },
     "columns": {
       "user": "User",
-      "phone": "Phone",
+      "phone": "Mobile",
       "roles": "Roles",
       "status": "Status",
-      "lastLogin": "Last sign-in",
-      "createdAt": "Created",
+      "lastLogin": "Last Sign-in",
+      "createdAt": "Created At",
       "actions": "Actions",
       "email": "Email"
     },
@@ -160,94 +160,163 @@
       "page": "Page {page} of {pages}"
     },
     "empty": {
-      "title": "No users found",
+      "title": "No Users Found",
       "description": "Change the filters or add a new user.",
-      "clear": "Clear filters"
+      "clear": "Clear Filters"
     },
     "error": {
-      "title": "Failed to load users",
-      "description": "Could not reach the server. Please try again."
+      "title": "Failed to Load Users",
+      "description": "Unable to connect to the server. Please try again."
     },
     "forbidden": {
-      "title": "Access denied",
-      "description": "You do not have access to user management. Contact your administrator to request access."
+      "title": "Access Denied",
+      "description": "You do not have permission to manage users. Contact the system administrator to request access."
     },
     "form": {
-      "createTitle": "Add user",
-      "createDescription": "Enter the details of the new user.",
-      "editTitle": "Edit user",
-      "editDescription": "The username and national code cannot be changed after creation.",
+      "createTitle": "Add User",
+      "createDescription": "Enter the information for the new user.",
+      "editTitle": "Edit User",
+      "editDescription": "Username and national ID cannot be changed after creation.",
       "username": "Username",
-      "firstName": "First name",
-      "lastName": "Last name",
-      "phone": "Mobile number",
-      "email": "Email (optional)",
-      "nationalCode": "National code",
-      "password": "Password (optional)",
-      "passwordNew": "New password (optional)",
-      "passwordHintCreate": "Signing in is mainly done with an SMS code; a password is only needed for username sign-in.",
-      "passwordHintEdit": "Changing the password ends all of this user's sessions.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Mobile Number",
+      "email": "Email (Optional)",
+      "nationalCode": "National ID",
+      "password": "Password (Optional)",
+      "passwordNew": "New Password (Optional)",
+      "passwordHintCreate": "The primary sign-in method uses SMS verification. A password is only required for username-based sign-in.",
+      "passwordHintEdit": "Changing the password will terminate all sessions belonging to this user.",
       "roles": "Roles",
-      "rolesFailed": "Could not load the roles.",
-      "isActive": "Account is active",
-      "conflict": "The username, mobile number or national code is already registered.",
+      "rolesFailed": "Failed to load roles.",
+      "isActive": "User account is active",
+      "conflict": "The username, mobile number, or national ID is already registered.",
       "validation": {
-        "usernameFormat": "The username must be 3 to 50 characters, start with a Latin letter and contain only letters, digits, dots and underscores",
-        "firstNameRequired": "Enter the first name",
-        "lastNameRequired": "Enter the last name",
+        "usernameFormat": "Username must be 3 to 50 characters, start with an English letter, and contain only letters, numbers, periods, and underscores.",
+        "firstNameRequired": "Please enter the first name",
+        "lastNameRequired": "Please enter the last name",
         "phoneInvalid": "Invalid mobile number (e.g. 09123456789)",
         "emailInvalid": "Invalid email address",
-        "nationalCodeInvalid": "The national code must be 10 digits",
+        "nationalCodeInvalid": "National ID must contain 10 digits",
         "passwordMin": "Password must be at least 8 characters",
-        "rolesRequired": "Select at least one role"
+        "rolesRequired": "Please select at least one role"
       }
     },
     "delete": {
-      "title": "Delete user",
-      "description": "Are you sure you want to delete “{name}”? Their sessions will also end.",
-      "confirm": "Yes, delete"
+      "title": "Delete User",
+      "description": "Are you sure you want to delete \"{name}\"? Their sessions will also be terminated.",
+      "confirm": "Yes, Delete"
     },
     "toast": {
-      "created": "User created",
-      "updated": "User updated",
-      "deleted": "User deleted"
+      "created": "User created successfully",
+      "updated": "User updated successfully",
+      "deleted": "User deleted successfully"
     }
   },
   "sessions": {
     "title": "Sessions",
-    "description": "Devices that are signed in to your account",
-    "current": "This device",
-    "lastActive": "Last active: {time}",
-    "signedInAt": "Signed in: {date}",
-    "ip": "IP",
-    "revoke": "End session",
-    "revokeOthers": "Sign out other devices",
+    "description": "Devices signed in to your account",
+    "current": "This Device",
+    "lastActive": "Last Activity: {time}",
+    "signedInAt": "Signed In At: {date}",
+    "ip": "IP Address",
+    "revoke": "Terminate Session",
+    "revokeOthers": "Sign Out Other Devices",
     "revokeDialog": {
-      "title": "End session",
-      "description": "The device “{device}” will be signed out of your account.",
-      "confirm": "End session"
+      "title": "Terminate Session",
+      "description": "The device \"{device}\" will be signed out of your account.",
+      "confirm": "Terminate Session"
     },
     "revokeOthersDialog": {
-      "title": "Sign out other devices",
-      "description": "All other sessions will end and only this device stays signed in.",
-      "confirm": "Yes, sign them out"
+      "title": "Sign Out Other Devices",
+      "description": "All other sessions will be terminated. Only this device will remain signed in.",
+      "confirm": "Yes, Sign Out"
     },
     "empty": {
-      "title": "No sessions found",
-      "description": "There are no active sessions for your account."
+      "title": "No Sessions Found",
+      "description": "There are no active sessions registered for your account."
     },
     "error": {
-      "title": "Failed to load sessions",
-      "description": "Could not reach the server. Please try again."
+      "title": "Failed to Load Sessions",
+      "description": "Unable to connect to the server. Please try again."
     },
     "toast": {
-      "revoked": "Session ended",
-      "revokedOthers": "Signed out of other devices"
+      "revoked": "Session terminated successfully",
+      "revokedOthers": "You have been signed out of other devices"
     },
-    "expiresAt": "Session expires: {date}"
+    "expiresAt": "Session Expires At: {date}"
   },
   "auditLogs": {
-    "title": "Audit logs",
-    "description": "Search and review recorded system events"
+    "title": "Audit Logs",
+    "description": "Search and review events recorded in the system",
+    "searchPlaceholder": "Search by user, action, or path",
+    "export": "Export CSV",
+    "exportSuccess": "Audit log report exported successfully.",
+    "copy": "Copy",
+    "copySuccess": "Information copied successfully.",
+    "copyFailed": "Failed to copy information.",
+    "detailsButton": "View Details",
+    "retry": "Retry",
+    "total": "Total events: {count}",
+    "previous": "Previous",
+    "next": "Next",
+    "noRecords": "There are no events to display.",
+    "loadFailed": "Failed to load audit logs.",
+    "eventTypes": {
+      "activity": "Activity",
+      "security": "Security",
+      "request": "Request"
+    },
+    "filters": {
+      "allEvents": "All Events",
+      "username": "Username",
+      "userId": "User ID",
+      "ipAddress": "IP Address",
+      "action": "Action",
+      "entityName": "Entity Name",
+      "entityId": "Entity ID",
+      "statusCode": "HTTP Status Code",
+      "fromUtc": "From Date",
+      "toUtc": "To Date"
+    },
+    "columns": {
+      "time": "Time",
+      "type": "Event Type",
+      "action": "Action",
+      "user": "User",
+      "ip": "IP Address",
+      "status": "HTTP Status",
+      "path": "Path",
+      "details": "Details"
+    },
+    "details": {
+      "title": "Audit Event Details",
+      "generalInfo": "General Information",
+      "eventType": "Event Type",
+      "action": "Action",
+      "user": "User",
+      "userId": "User ID",
+      "time": "Occurred At",
+      "ipAddress": "IP Address",
+      "entity": "Entity Name",
+      "entityId": "Entity ID",
+      "description": "Description",
+      "httpInfo": "Request Information",
+      "httpMethod": "HTTP Method",
+      "path": "Request Path",
+      "statusCode": "Status Code",
+      "duration": "Duration (milliseconds)",
+      "correlationId": "Correlation ID",
+      "userAgent": "Browser and Device",
+      "changes": "Data Changes",
+      "oldValues": "Previous Values",
+      "newValues": "New Values",
+      "noData": "No information available",
+      "logId": "Log ID",
+      "close": "Close"
+    },
+    "pagination": {
+      "page": "Page {page} of {pages}"
+    }
   }
 }

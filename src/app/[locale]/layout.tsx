@@ -1,13 +1,16 @@
+
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+
 import { ThemeScript } from "@/components/shared/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { localeDirections, routing } from "@/i18n/routing";
 import { vazirmatn } from "@/lib/fonts";
+
 import "../globals.css";
 
 type LayoutProps = {
@@ -23,14 +26,24 @@ export async function generateMetadata({
   params,
 }: Pick<LayoutProps, "params">): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "common" });
+
+  const t = await getTranslations({
+    locale,
+    namespace: "common",
+  });
 
   return {
-    title: { default: t("appName"), template: `%s | ${t("appName")}` },
+    title: {
+      default: t("appName"),
+      template: `%s | ${t("appName")}`,
+    },
   };
 }
 
-export default async function LocaleLayout({ children, params }: LayoutProps) {
+export default async function LocaleLayout({
+  children,
+  params,
+}: LayoutProps) {
   const { locale } = await params;
 
   if (!hasLocale(routing.locales, locale)) {
@@ -39,7 +52,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   setRequestLocale(locale);
 
-  // nonce را proxy.ts برای هر درخواست می‌سازد؛ خواندن headers() صفحه را پویا (dynamic) می‌کند.
+  // دریافت nonce از Proxy برای رعایت CSP
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
@@ -52,6 +65,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       <head>
         <ThemeScript nonce={nonce} />
       </head>
+
       <body
         className={`${vazirmatn.className} min-h-dvh bg-background text-foreground antialiased`}
       >

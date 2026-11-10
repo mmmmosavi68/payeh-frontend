@@ -18,7 +18,7 @@ const MAX_QUERY = 1024;
 const NO_STORE = { "Cache-Control": "no-store" };
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
-type SessionEffect = "none" | "create" | "clear";
+type SessionEffect = "none" | "create" | "clear" | "preserve";
 
 type Rule = {
   method: Method;
@@ -37,8 +37,11 @@ const rules: Rule[] = [
   { method: "POST", pattern: /^auth\/login$/i, auth: false, session: "create" },
   { method: "POST", pattern: /^auth\/login\/verify$/i, auth: false, session: "create" },
   { method: "POST", pattern: /^auth\/login\/resend$/i, auth: false, session: "none" },
+  // خروج از دستگاه جاری؛ کوکی‌ها پاک می‌شوند.
   { method: "POST", pattern: /^auth\/logout$/i, auth: true, session: "clear" },
-  { method: "POST", pattern: /^auth\/logout-all$/i, auth: true, session: "clear" },
+
+  // خروج از سایر دستگاه‌ها؛ کوکی دستگاه جاری حفظ می‌شود.
+  { method: "POST", pattern: /^auth\/logout-all$/i, auth: true, session: "preserve" },
   { method: "GET", pattern: /^auth\/me$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^auth\/sessions$/i, auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^auth/sessions/${GUID}$`, "i"), auth: true, session: "none" },
@@ -235,15 +238,22 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
       result = await call();
     }
 
-    if (isLogout) return loggedOut();
+    if (rule.session === "clear") return loggedOut();
+
     if (result.status === 401) return unauthorized();
 
     const response = relay(result);
-    if (state.tokens) setSessionCookies(response, state.tokens);
+
+    // اگر در حین درخواست Refresh Token انجام شده باشد،
+    // کوکی‌های جدید را روی همان مرورگر ثبت می‌کنیم.
+    if (state.tokens) {
+      setSessionCookies(response, state.tokens);
+    }
+
     return response;
   } catch (error) {
     console.error("[bff] upstream error:", error instanceof Error ? error.message : error);
-    return isLogout ? loggedOut() : badGateway();
+    return rule.session === "clear" ? loggedOut() : badGateway();
   }
 }
 

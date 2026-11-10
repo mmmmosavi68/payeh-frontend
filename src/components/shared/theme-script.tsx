@@ -1,14 +1,13 @@
-"use client";
-
 import Script from "next/script";
 
 const script = `
 (function () {
   try {
     var t = localStorage.getItem("theme");
-    var d = t === "dark" ||
+    var d =
+      t === "dark" ||
       (t !== "light" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
 
     var r = document.documentElement;
     r.classList.toggle("dark", d);
