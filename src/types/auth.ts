@@ -28,6 +28,4 @@ export type LoginChallenge = {
   devCode?: string | null;
 };
 
-export type PasswordLoginResult =
-  | { requiresOtp: true; challenge: LoginChallenge }
-  | { requiresOtp: false };
+export type PasswordLoginResult = { requiresOtp: true; challenge: LoginChallenge } | { requiresOtp: false };

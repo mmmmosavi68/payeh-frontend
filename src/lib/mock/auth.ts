@@ -4,12 +4,11 @@ import type { AuthConfig, LoginChallenge, OtpRequestResult, PasswordLoginResult 
 import { delay } from "./utils";
 
 /** کلید تستی گوگل: ویجت نمایش داده می‌شود و همیشه تأیید می‌شود. */
-const DEMO_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 const captchaOn = process.env.NEXT_PUBLIC_DEMO_CAPTCHA === "1";
 
 const config: AuthConfig = {
   captchaEnabled: captchaOn,
-  captchaSiteKey: captchaOn ? DEMO_SITE_KEY : null,
+  captchaProvider: null,
   mobileLoginEnabled: true,
   passwordLoginEnabled: true,
   passwordLoginRequiresOtp: process.env.NEXT_PUBLIC_DEMO_PASSWORD_OTP !== "0",

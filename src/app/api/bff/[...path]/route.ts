@@ -55,6 +55,13 @@ const rules: Rule[] = [
   { method: "GET", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
+
+  // Menus
+  { method: "GET", pattern: /^menus$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^menus$/i, auth: true, session: "none" },
+  { method: "GET", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "PUT", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
