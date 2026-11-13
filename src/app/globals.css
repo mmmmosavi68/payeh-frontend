@@ -59,26 +59,43 @@
 }
 
 .dark {
-  --background: #050505;
-  --foreground: #fafafa;
-  --card: #0f0f10;
-  --card-foreground: #fafafa;
-  --popover: #0f0f10;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #09090b;
-  --secondary: #1a1a1c;
-  --secondary-foreground: #fafafa;
-  --muted: #18181a;
-  --muted-foreground: #a1a1aa;
-  --accent: #1c1c1f;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.09);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #71717a;
-  --selected: #232326;
-  --selected-foreground: #fafafa;
+  /* Base */
+  --background: #191919;
+  --foreground: #e6e6e6;
+
+  /* Cards & Popovers */
+  --card: #202020;
+  --card-foreground: #e6e6e6;
+  --popover: #252525;
+  --popover-foreground: #e6e6e6;
+
+  /* Primary */
+  --primary: #e6e6e6;
+  --primary-foreground: #191919;
+
+  /* Secondary */
+  --secondary: #2c2c2c;
+  --secondary-foreground: #e6e6e6;
+
+  /* Muted */
+  --muted: #222222;
+  --muted-foreground: #9b9b9b;
+
+  /* Accent */
+  --accent: #303030;
+  --accent-foreground: #e6e6e6;
+
+  /* Status */
+  --destructive: #e05252;
+
+  /* Borders & Inputs */
+  --border: #373737;
+  --input: #414141;
+  --ring: #777777;
+
+  /* Selected */
+  --selected: #303030;
+  --selected-foreground: #e6e6e6;
 }
 
 @layer base {
