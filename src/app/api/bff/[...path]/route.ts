@@ -56,6 +56,28 @@ const rules: Rule[] = [
   { method: "PUT", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
 
+  // User Management
+  {
+    method: "GET",
+    pattern: /^user-management\/available-menus$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: new RegExp(`^user-management/${GUID}/menu-access$`, "i"),
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "PUT",
+    pattern: new RegExp(`^user-management/${GUID}/menu-access$`, "i"),
+    auth: true,
+    session: "none",
+  },
+  { method: "POST", pattern: /^user-management\/bulk\/deactivate$/i, auth: true, session: "none" },
+  { method: "DELETE", pattern: /^user-management\/bulk$/i, auth: true, session: "none" },
+
   // Groups
   { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^groups$/i, auth: true, session: "none" },
@@ -302,11 +324,14 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
 }
 
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
+  console.log("[BFF HIT]", request.method, request.url);
   const { path: segments } = await context.params;
   const path = segments.join("/");
   const method = request.method as Method;
 
   const rule = rules.find((r) => r.method === method && r.pattern.test(path));
+  console.log("[BFF PATH]", path);
+  console.log("[BFF RULE]", rule);
   if (!rule) return fail(404, ApiStatus.NotFound, "Not found");
 
   if (method !== "GET") {

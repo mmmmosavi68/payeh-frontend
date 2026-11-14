@@ -74,7 +74,6 @@ export async function listUsers(query: UserQuery): Promise<PagedResult<UserRecor
   };
 }
 
-
 export async function getUserById(id: string): Promise<UserRecord> {
   const user = await apiRequest(`users/${id}`, { schema: userSchema });
   return toRecord(user);
@@ -125,4 +124,52 @@ export async function deleteUser(id: string): Promise<void> {
 
 export async function listRoles(): Promise<RoleInfo[]> {
   return apiRequest("roles", { schema: z.array(roleSchema) });
+}
+
+const userMenuSchema = z.object({
+  id: z.string(),
+  menuTitle: z.string(),
+  parentId: z.string().nullable().optional(),
+  pageCode: z.number().nullable().optional(),
+  path: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
+  showMenu: z.boolean().optional(),
+});
+
+export type UserAvailableMenu = z.infer<typeof userMenuSchema>;
+
+export async function getUserAvailableMenus(): Promise<UserAvailableMenu[]> {
+  return apiRequest("user-management/available-menus", {
+    schema: z.array(userMenuSchema),
+  });
+}
+
+export async function getUserMenuAccess(userId: string): Promise<string[]> {
+  return apiRequest(`user-management/${userId}/menu-access`, {
+    schema: z.array(z.string()),
+  });
+}
+
+export async function updateUserMenuAccess(userId: string, menuIds: string[]): Promise<void> {
+  await apiRequest(`user-management/${userId}/menu-access`, {
+    method: "PUT",
+    body: { menuIds },
+    schema: z.unknown(),
+  });
+}
+
+export async function bulkDeactivateUsers(userIds: string[]): Promise<void> {
+  await apiRequest("user-management/bulk/deactivate", {
+    method: "POST",
+    body: { userIds },
+    schema: z.unknown(),
+  });
+}
+
+export async function bulkDeleteUsers(userIds: string[]): Promise<void> {
+  await apiRequest("user-management/bulk", {
+    method: "DELETE",
+    body: { userIds },
+    schema: z.unknown(),
+  });
 }

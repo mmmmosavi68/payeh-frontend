@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -17,6 +18,8 @@ import {
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState, ErrorState } from "@/components/shared/data-states";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getMe } from "@/features/auth/me";
 import { useRemoteData } from "@/hooks/use-remote-data";
@@ -51,9 +55,12 @@ import { localeDirections } from "@/i18n/routing";
 import { ApiError, ApiStatus } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import type { UserQuery, UserRecord, UserSort } from "@/types/user";
+
 import { deleteUser, getUserById, listRoles, listUsers } from "../api";
 import { UserFormDialog } from "./user-form-dialog";
 import { usePermission } from "@/features/permissions/use-permission";
+import { UserMenuAccessAction } from "./user-menu-access-dialog";
+import { UserBulkActions } from "./user-bulk-actions";
 
 const PAGE_SIZE = 10;
 
@@ -66,12 +73,15 @@ function fullName(user: UserRecord) {
 function initials(user: UserRecord) {
   const first = Array.from(user.firstName)[0];
   const last = Array.from(user.lastName)[0];
+
   if (first && last) return `${first}${last}`;
+
   return Array.from(user.userName).slice(0, 2).join("").toUpperCase();
 }
 
 function StatusBadge({ active }: { active: boolean }) {
   const t = useTranslations("users.status");
+
   return (
     <span
       className={cn(
@@ -88,6 +98,7 @@ function StatusBadge({ active }: { active: boolean }) {
 
 function RoleBadges({ roles }: { roles: UserRecord["roles"] }) {
   const locale = useLocale();
+
   return (
     <div className="flex flex-wrap gap-1">
       {roles.map((role) => (
@@ -105,6 +116,7 @@ function UserCell({ user }: { user: UserRecord }) {
       <span className="grid size-9 shrink-0 place-items-center rounded-full border bg-muted text-xs font-medium">
         {initials(user)}
       </span>
+
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{fullName(user)}</p>
         <p className="truncate text-xs text-muted-foreground" dir="ltr">
@@ -124,7 +136,14 @@ type RowActionsProps = {
   onDelete: () => void;
 };
 
-function RowActions({ user, dir, canDelete, canUpdate, onEdit, onDelete }: RowActionsProps) {
+function RowActions({
+  user,
+  dir,
+  canDelete,
+  canUpdate,
+  onEdit,
+  onDelete,
+}: RowActionsProps) {
   const t = useTranslations("common");
 
   return (
@@ -139,11 +158,15 @@ function RowActions({ user, dir, canDelete, canUpdate, onEdit, onDelete }: RowAc
           <Ellipsis className="size-4" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end">
-        {canUpdate ? <DropdownMenuItem onSelect={onEdit}>
-          <Pencil className="size-4" aria-hidden />
-          {t("edit")}
-        </DropdownMenuItem> : null}
+        {canUpdate ? (
+          <DropdownMenuItem onSelect={onEdit}>
+            <Pencil className="size-4" aria-hidden />
+            {t("edit")}
+          </DropdownMenuItem>
+        ) : null}
+
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onSelect={onDelete}>
             <Trash2 className="size-4" aria-hidden />
@@ -188,12 +211,31 @@ export function UsersTable() {
   const format = useFormatter();
   const locale = useLocale();
   const dir = localeDirections[locale] ?? "ltr";
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const createPermission = usePermission("Users", "Create");
   const updatePermission = usePermission("Users", "Update");
   const deletePermission = usePermission("Users", "Delete");
 
+  const bulkDeactivatePermission = usePermission(
+    "UserManagement",
+    "BulkDeactivate",
+  );
+
+  const bulkDeletePermission = usePermission(
+    "UserManagement",
+    "BulkDelete",
+  );
+
+  const canBulkSelect =
+    (!bulkDeactivatePermission.loading &&
+      bulkDeactivatePermission.allowed) ||
+    (!bulkDeletePermission.loading && bulkDeletePermission.allowed);
+
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput, 300);
+
   const [status, setStatus] = useState<UserQuery["status"]>("all");
   const [roleId, setRoleId] = useState<number | null>(null);
   const [sort, setSort] = useState<UserSort>("createdDate");
@@ -206,7 +248,15 @@ export function UsersTable() {
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
 
   const query = useMemo<UserQuery>(
-    () => ({ page, pageSize: PAGE_SIZE, search, status, roleId, sort, dir: sortDir }),
+    () => ({
+      page,
+      pageSize: PAGE_SIZE,
+      search,
+      status,
+      roleId,
+      sort,
+      dir: sortDir,
+    }),
     [page, search, status, roleId, sort, sortDir],
   );
 
@@ -214,29 +264,62 @@ export function UsersTable() {
     JSON.stringify(query),
     () => listUsers(query),
   );
+
   const { data: me } = useRemoteData("me", getMe);
+
   const {
     data: roles,
     failed: rolesFailed,
     reload: reloadRoles,
   } = useRemoteData("roles", listRoles);
 
+  const selectableUsers =
+    data?.items.filter((user) => user.id !== me?.id) ?? [];
+
+  const allSelectableSelected =
+    selectableUsers.length > 0 &&
+    selectableUsers.every((user) => selectedIds.includes(user.id));
+
+  const someSelectableSelected =
+    selectableUsers.some((user) => selectedIds.includes(user.id));
+
+  function toggleUserSelection(userId: string, checked: boolean) {
+    setSelectedIds((current) =>
+      checked
+        ? [...new Set([...current, userId])]
+        : current.filter((id) => id !== userId),
+    );
+  }
+
+  function toggleAllUsers(checked: boolean) {
+    setSelectedIds(checked ? selectableUsers.map((user) => user.id) : []);
+  }
+
+  function clearSelection() {
+    setSelectedIds([]);
+  }
+
   const isForbidden =
     error instanceof ApiError && error.status === ApiStatus.Forbidden;
 
-  const hasFilters = searchInput !== "" || status !== "all" || roleId !== null;
+  const hasFilters =
+    searchInput !== "" || status !== "all" || roleId !== null;
+
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(page * PAGE_SIZE, total);
 
   function toggleSort(key: UserSort) {
+    clearSelection();
+
     if (sort === key) {
       setSortDir((value) => (value === "asc" ? "desc" : "asc"));
     } else {
       setSort(key);
       setSortDir(key === "userName" ? "asc" : "desc");
     }
+
     setPage(1);
   }
 
@@ -251,7 +334,11 @@ export function UsersTable() {
       setFormUser(details);
       setFormOpen(true);
     } catch {
-      toast.error(locale === "fa" ? "دریافت جزئیات کاربر ناموفق بود." : "Could not load user details.");
+      toast.error(
+        locale === "fa"
+          ? "دریافت جزئیات کاربر ناموفق بود."
+          : "Could not load user details.",
+      );
     }
   }
 
@@ -261,6 +348,7 @@ export function UsersTable() {
   }
 
   function clearFilters() {
+    clearSelection();
     setSearchInput("");
     setStatus("all");
     setRoleId(null);
@@ -269,9 +357,14 @@ export function UsersTable() {
 
   async function confirmDelete() {
     if (!deleteTarget) return;
+
     await deleteUser(deleteTarget.id);
     toast.success(t("toast.deleted"));
-    if (data && data.items.length === 1 && page > 1) setPage(page - 1);
+
+    if (data && data.items.length === 1 && page > 1) {
+      setPage(page - 1);
+    }
+
     reload();
   }
 
@@ -286,11 +379,16 @@ export function UsersTable() {
   }
 
   const showSkeleton = !data && !failed;
+
   const formatDate = (iso: string) =>
     format.dateTime(new Date(iso), { dateStyle: "medium" });
+
   const formatLogin = (iso: string | null) =>
     iso
-      ? format.dateTime(new Date(iso), { dateStyle: "medium", timeStyle: "short" })
+      ? format.dateTime(new Date(iso), {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
       : t("never");
 
   return (
@@ -301,10 +399,12 @@ export function UsersTable() {
             className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
           />
+
           <Input
             type="search"
             value={searchInput}
             onChange={(event) => {
+              clearSelection();
               setSearchInput(event.target.value);
               setPage(1);
             }}
@@ -319,15 +419,21 @@ export function UsersTable() {
           dir={dir}
           value={roleId === null ? "all" : String(roleId)}
           onValueChange={(value) => {
+            clearSelection();
             setRoleId(value === "all" ? null : Number(value));
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full lg:w-44" aria-label={t("filters.role")}>
+          <SelectTrigger
+            className="w-full lg:w-44"
+            aria-label={t("filters.role")}
+          >
             <SelectValue />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="all">{t("filters.allRoles")}</SelectItem>
+
             {roles?.map((role) => (
               <SelectItem key={role.id} value={String(role.id)}>
                 {locale === "fa" ? role.nameFa : role.nameEn}
@@ -340,13 +446,18 @@ export function UsersTable() {
           dir={dir}
           value={status}
           onValueChange={(value) => {
+            clearSelection();
             setStatus(value as UserQuery["status"]);
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full lg:w-40" aria-label={t("filters.status")}>
+          <SelectTrigger
+            className="w-full lg:w-40"
+            aria-label={t("filters.status")}
+          >
             <SelectValue />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="all">{t("filters.all")}</SelectItem>
             <SelectItem value="active">{t("filters.active")}</SelectItem>
@@ -354,10 +465,22 @@ export function UsersTable() {
           </SelectContent>
         </Select>
 
-        <Button className="rounded-full" onClick={openCreate} disabled={createPermission.loading || !createPermission.allowed}>
-          <Plus className="size-4" aria-hidden />
-          {t("add")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            className="rounded-full"
+            onClick={openCreate}
+            disabled={createPermission.loading || !createPermission.allowed}
+          >
+            <Plus className="size-4" aria-hidden />
+            {t("add")}
+          </Button>
+
+          <UserBulkActions
+            selectedIds={selectedIds}
+            onClearSelection={clearSelection}
+            onCompleted={reload}
+          />
+        </div>
       </div>
 
       {failed ? (
@@ -396,6 +519,25 @@ export function UsersTable() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {canBulkSelect ? (
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={
+                          allSelectableSelected
+                            ? true
+                            : someSelectableSelected
+                              ? "indeterminate"
+                              : false
+                        }
+                        disabled={selectableUsers.length === 0}
+                        onCheckedChange={(checked) =>
+                          toggleAllUsers(checked === true)
+                        }
+                        aria-label={t("management.bulk.selectUsers")}
+                      />
+                    </TableHead>
+                  ) : null}
+
                   <TableHead aria-sort={ariaSort(sort === "userName", sortDir)}>
                     <SortHead
                       label={t("columns.user")}
@@ -404,11 +546,24 @@ export function UsersTable() {
                       onClick={() => toggleSort("userName")}
                     />
                   </TableHead>
+
                   <TableHead>{t("columns.phone")}</TableHead>
-                  <TableHead aria-sort={ariaSort(sort === "email", sortDir)}><SortHead label={t("columns.email")} active={sort === "email"} dir={sortDir} onClick={() => toggleSort("email")} /></TableHead>
+
+                  <TableHead aria-sort={ariaSort(sort === "email", sortDir)}>
+                    <SortHead
+                      label={t("columns.email")}
+                      active={sort === "email"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("email")}
+                    />
+                  </TableHead>
+
                   <TableHead>{t("columns.roles")}</TableHead>
                   <TableHead>{t("columns.status")}</TableHead>
-                  <TableHead aria-sort={ariaSort(sort === "lastLoginDate", sortDir)}>
+
+                  <TableHead
+                    aria-sort={ariaSort(sort === "lastLoginDate", sortDir)}
+                  >
                     <SortHead
                       label={t("columns.lastLogin")}
                       active={sort === "lastLoginDate"}
@@ -416,7 +571,10 @@ export function UsersTable() {
                       onClick={() => toggleSort("lastLoginDate")}
                     />
                   </TableHead>
-                  <TableHead aria-sort={ariaSort(sort === "createdDate", sortDir)}>
+
+                  <TableHead
+                    aria-sort={ariaSort(sort === "createdDate", sortDir)}
+                  >
                     <SortHead
                       label={t("columns.createdAt")}
                       active={sort === "createdDate"}
@@ -424,52 +582,89 @@ export function UsersTable() {
                       onClick={() => toggleSort("createdDate")}
                     />
                   </TableHead>
-                  <TableHead className="w-12">
+
+                  <TableHead className="w-24">
                     <span className="sr-only">{t("columns.actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {showSkeleton
                   ? Array.from({ length: 5 }, (_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 8 }, (_, cell) => (
-                          <TableCell key={cell}>
-                            <Skeleton className="h-5 w-full max-w-32" />
-                          </TableCell>
-                        ))}
+                        {Array.from(
+                          { length: canBulkSelect ? 9 : 8 },
+                          (_, cell) => (
+                            <TableCell key={cell}>
+                              <Skeleton className="h-5 w-full max-w-32" />
+                            </TableCell>
+                          ),
+                        )}
                       </TableRow>
                     ))
                   : data?.items.map((user) => (
                       <TableRow key={user.id}>
+                        {canBulkSelect ? (
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.includes(user.id)}
+                              disabled={user.id === me?.id}
+                              onCheckedChange={(checked) =>
+                                toggleUserSelection(user.id, checked === true)
+                              }
+                              aria-label={fullName(user)}
+                            />
+                          </TableCell>
+                        ) : null}
+
                         <TableCell>
                           <UserCell user={user} />
                         </TableCell>
+
                         <TableCell>
                           <span dir="ltr">{user.phone}</span>
                         </TableCell>
-                        <TableCell><span dir="ltr" className="text-sm">{user.email || "—"}</span></TableCell>
+
+                        <TableCell>
+                          <span dir="ltr" className="text-sm">
+                            {user.email || "—"}
+                          </span>
+                        </TableCell>
+
                         <TableCell>
                           <RoleBadges roles={user.roles} />
                         </TableCell>
+
                         <TableCell>
                           <StatusBadge active={user.isActive} />
                         </TableCell>
+
                         <TableCell className="text-muted-foreground">
                           {formatLogin(user.lastLoginAt)}
                         </TableCell>
+
                         <TableCell className="text-muted-foreground">
                           {formatDate(user.createdAt)}
                         </TableCell>
+
                         <TableCell>
-                          <RowActions
-                            user={user}
-                            dir={dir}
-                            canDelete={deletePermission.allowed && user.id !== me?.id}
-                        canUpdate={updatePermission.allowed}
-                            onEdit={() => { void openEdit(user); }}
-                            onDelete={() => openDelete(user)}
-                          />
+                          <div className="flex items-center justify-end gap-1">
+                            <UserMenuAccessAction user={user} />
+
+                            <RowActions
+                              user={user}
+                              dir={dir}
+                              canDelete={
+                                deletePermission.allowed && user.id !== me?.id
+                              }
+                              canUpdate={updatePermission.allowed}
+                              onEdit={() => {
+                                void openEdit(user);
+                              }}
+                              onDelete={() => openDelete(user)}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -495,20 +690,45 @@ export function UsersTable() {
               : data?.items.map((user) => (
                   <li key={user.id} className="rounded-2xl border bg-card p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <UserCell user={user} />
-                      <RowActions
-                        user={user}
-                        dir={dir}
-                        canDelete={deletePermission.allowed && user.id !== me?.id}
-                        canUpdate={updatePermission.allowed}
-                        onEdit={() => { void openEdit(user); }}
-                        onDelete={() => openDelete(user)}
-                      />
+                      <div className="flex min-w-0 items-start gap-3">
+                        {canBulkSelect ? (
+                          <Checkbox
+                            className="mt-2"
+                            checked={selectedIds.includes(user.id)}
+                            disabled={user.id === me?.id}
+                            onCheckedChange={(checked) =>
+                              toggleUserSelection(user.id, checked === true)
+                            }
+                            aria-label={fullName(user)}
+                          />
+                        ) : null}
+
+                        <UserCell user={user} />
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <UserMenuAccessAction user={user} />
+
+                        <RowActions
+                          user={user}
+                          dir={dir}
+                          canDelete={
+                            deletePermission.allowed && user.id !== me?.id
+                          }
+                          canUpdate={updatePermission.allowed}
+                          onEdit={() => {
+                            void openEdit(user);
+                          }}
+                          onDelete={() => openDelete(user)}
+                        />
+                      </div>
                     </div>
+
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <StatusBadge active={user.isActive} />
                       <RoleBadges roles={user.roles} />
                     </div>
+
                     <p className="mt-3 text-xs text-muted-foreground">
                       <span dir="ltr">{user.phone}</span> ·{" "}
                       {t("columns.lastLogin")}: {formatLogin(user.lastLoginAt)}
@@ -526,17 +746,22 @@ export function UsersTable() {
                   total: format.number(total),
                 })}
               </p>
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   className="rounded-full"
                   disabled={page <= 1 || loading}
-                  onClick={() => setPage((value) => value - 1)}
+                  onClick={() => {
+                    clearSelection();
+                    setPage((value) => value - 1);
+                  }}
                 >
                   <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
                   {tc("previous")}
                 </Button>
+
                 <span
                   className="px-2 text-sm text-muted-foreground"
                   aria-live="polite"
@@ -546,12 +771,16 @@ export function UsersTable() {
                     pages: format.number(totalPages),
                   })}
                 </span>
+
                 <Button
                   variant="outline"
                   size="sm"
                   className="rounded-full"
                   disabled={page >= totalPages || loading}
-                  onClick={() => setPage((value) => value + 1)}
+                  onClick={() => {
+                    clearSelection();
+                    setPage((value) => value + 1);
+                  }}
                 >
                   {tc("next")}
                   <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
