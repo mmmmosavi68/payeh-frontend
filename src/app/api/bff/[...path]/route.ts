@@ -56,12 +56,49 @@ const rules: Rule[] = [
   { method: "PUT", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
 
+  // Groups
+  { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^groups$/i, auth: true, session: "none" },
+
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "PUT", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
+  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/${GUID}$`, "i"), auth: true, session: "none" },
+
+  { method: "GET", pattern: /^groups\/available-menus$/i, auth: true, session: "none" },
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
+  { method: "PUT", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
+
   // Menus
   { method: "GET", pattern: /^menus$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^menus$/i, auth: true, session: "none" },
   { method: "GET", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
+
+  // Groups
+  { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^groups$/i, auth: true, session: "none" },
+
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "PUT", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
+
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
+  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/${GUID}$`, "i"), auth: true, session: "none" },
+
+  // Bulk Group Users
+  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
+
+  // Group Menu Access
+  { method: "GET", pattern: /^groups\/available-menus$/i, auth: true, session: "none" },
+  { method: "GET", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
+  { method: "PUT", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
@@ -290,7 +327,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   }
 
   let body: string | undefined;
-  if (method === "POST" || method === "PUT") {
+  if (method === "POST" || method === "PUT" || method === "DELETE") {
     if (Number(request.headers.get("content-length") ?? "0") > MAX_BODY) {
       return fail(413, ApiStatus.BadRequest, "Payload too large");
     }

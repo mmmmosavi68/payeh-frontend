@@ -23,9 +23,8 @@ import {
   Users,
   X,
   type LucideIcon,
-  type ReactNode,
 } from "lucide-react";
-
+import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
@@ -501,7 +500,7 @@ export function SidebarNav({
 function renderSectionTitle(
   icon: ReactNode,
   title: string,
-  count?: number,
+  count?: ReactNode,
 ) {
   return (
     <div className="flex h-8 items-center gap-2 px-2">
