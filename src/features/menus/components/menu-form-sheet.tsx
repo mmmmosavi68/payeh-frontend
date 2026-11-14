@@ -158,33 +158,39 @@ const {
   defaultValues: emptyValues,
 });
 
-  useEffect(() => {
-    if (!open) return;
+useEffect(() => {
+  if (!open) return;
 
+  const frameId = window.requestAnimationFrame(() => {
     setFormError(null);
-
-    if (menu) {
-      reset({
-        parentId: menu.parentId,
-        menuTitle: menu.menuTitle,
-        pageCode: menu.pageCode,
-        path: menu.path ?? "",
-        version: menu.version ?? "",
-        controllerName: menu.controllerName ?? "",
-        actionName: menu.actionName ?? "",
-        showMenu: menu.showMenu ?? true,
-        cssClass: menu.cssClass ?? "",
-        icon: menu.icon ?? "",
-        link: menu.link ?? "",
-        isActive: menu.isActive,
-      });
-} else {
-  reset({
-    ...emptyValues,
-    parentId: defaultParentId,
   });
-}
-  }, [open, menu, defaultParentId, reset]);
+
+  if (menu) {
+    reset({
+      parentId: menu.parentId,
+      menuTitle: menu.menuTitle,
+      pageCode: menu.pageCode,
+      path: menu.path ?? "",
+      version: menu.version ?? "",
+      controllerName: menu.controllerName ?? "",
+      actionName: menu.actionName ?? "",
+      showMenu: menu.showMenu ?? true,
+      cssClass: menu.cssClass ?? "",
+      icon: menu.icon ?? "",
+      link: menu.link ?? "",
+      isActive: menu.isActive,
+    });
+  } else {
+    reset({
+      ...emptyValues,
+      parentId: defaultParentId,
+    });
+  }
+
+  return () => {
+    window.cancelAnimationFrame(frameId);
+  };
+}, [open, menu, defaultParentId, reset]);
 
   async function onSubmit(values: MenuFormValues) {
     setFormError(null);

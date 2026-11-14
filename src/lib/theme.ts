@@ -1,8 +1,10 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark" | "system";
+export type Palette = "neutral" | "indigo";
 
 const STORAGE_KEY = "theme";
+const PALETTE_STORAGE_KEY = "palette";
 const listeners = new Set<() => void>();
 
 function readTheme(): Theme {
@@ -11,6 +13,14 @@ function readTheme(): Theme {
     return value === "light" || value === "dark" ? value : "system";
   } catch {
     return "system";
+  }
+}
+
+function readPalette(): Palette {
+  try {
+    return localStorage.getItem(PALETTE_STORAGE_KEY) === "indigo" ? "indigo" : "neutral";
+  } catch {
+    return "neutral";
   }
 }
 
@@ -25,21 +35,39 @@ function resolve(theme: Theme): "light" | "dark" {
 function apply(theme: Theme) {
   const resolved = resolve(theme);
   const root = document.documentElement;
+
   root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
+}
+
+function applyPalette(palette: Palette) {
+  document.documentElement.dataset.palette = palette;
+}
+
+function notifyListeners() {
+  listeners.forEach((listener) => listener());
 }
 
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
 
   const media = window.matchMedia("(prefers-color-scheme: dark)");
+
   const handleMedia = () => {
-    if (readTheme() === "system") apply("system");
+    if (readTheme() === "system") {
+      apply("system");
+    }
     onChange();
   };
+
   const handleStorage = (event: StorageEvent) => {
     if (event.key === STORAGE_KEY) {
       apply(readTheme());
+      onChange();
+    }
+
+    if (event.key === PALETTE_STORAGE_KEY) {
+      applyPalette(readPalette());
       onChange();
     }
   };
@@ -56,29 +84,45 @@ function subscribe(onChange: () => void) {
 
 function getSnapshot(): string {
   const theme = readTheme();
-  return `${theme}|${resolve(theme)}`;
+  const palette = readPalette();
+
+  return `${theme}|${resolve(theme)}|${palette}`;
 }
 
-// روی سرور (و هنگام hydration) تم هنوز مشخص نیست.
-const getServerSnapshot = () => "system|";
+const getServerSnapshot = () => "system||neutral";
 
 export function useTheme() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [theme, resolved] = snapshot.split("|");
+
+  const [theme, resolved, palette] = snapshot.split("|");
 
   const setTheme = useCallback((next: Theme) => {
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      // حافظه‌ی مرورگر در دسترس نیست؛ تم فقط برای همین صفحه اعمال می‌شود.
+      // تم فقط برای همین صفحه اعمال می‌شود.
     }
+
     apply(next);
-    listeners.forEach((listener) => listener());
+    notifyListeners();
+  }, []);
+
+  const setPalette = useCallback((next: Palette) => {
+    try {
+      localStorage.setItem(PALETTE_STORAGE_KEY, next);
+    } catch {
+      // پالت فقط برای همین صفحه اعمال می‌شود.
+    }
+
+    applyPalette(next);
+    notifyListeners();
   }, []);
 
   return {
     theme: theme as Theme,
     resolvedTheme: resolved ? (resolved as "light" | "dark") : undefined,
+    palette: palette as Palette,
     setTheme,
+    setPalette,
   };
 }

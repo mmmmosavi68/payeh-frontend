@@ -325,14 +325,20 @@ export function SidebarNav({
   const [quickSearch, setQuickSearch] = useState("");
 
   // بارگذاری اطلاعات ذخیره‌شده در مرورگر
-  useEffect(() => {
+useEffect(() => {
+  const frameId = window.requestAnimationFrame(() => {
     const favorites = readStorageArray(FAVORITES_STORAGE_KEY);
     const recent = readStorageArray(RECENT_STORAGE_KEY);
 
     setFavoriteIds(favorites.slice(0, MAX_FAVORITES));
     setRecentIds(recent.slice(0, MAX_RECENT_ITEMS));
     setStorageReady(true);
-  }, []);
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frameId);
+  };
+}, []);
 
   // ذخیره علاقه‌مندی‌ها
   useEffect(() => {
@@ -414,25 +420,42 @@ export function SidebarNav({
       .slice(0, 10);
   }, [navigableMenus, quickSearch, locale]);
 
-  // ثبت صفحه فعال در تاریخچه
-  useEffect(() => {
-    if (!storageReady || !pathname) return;
+// ثبت صفحه فعال در تاریخچه
+useEffect(() => {
+  if (!storageReady || !pathname) return;
 
-    const matched = [...navigableMenus]
-      .sort(
-        (a, b) =>
-          normalizePath(b.link).length -
-          normalizePath(a.link).length,
-      )
-      .find((node) => isActivePath(pathname, node.link));
+  const matched = [...navigableMenus]
+    .sort(
+      (a, b) =>
+        normalizePath(b.link).length -
+        normalizePath(a.link).length,
+    )
+    .find((node) => isActivePath(pathname, node.link));
 
-    if (!matched) return;
+  if (!matched) return;
 
-    setRecentIds((current) => [
-      matched.id,
-      ...current.filter((id) => id !== matched.id),
-    ].slice(0, MAX_RECENT_ITEMS));
-  }, [pathname, navigableMenus, storageReady]);
+  const frameId = window.requestAnimationFrame(() => {
+    setRecentIds((current) => {
+      const next = [
+        matched.id,
+        ...current.filter((id) => id !== matched.id),
+      ].slice(0, MAX_RECENT_ITEMS);
+
+      if (
+        current.length === next.length &&
+        current.every((id, index) => id === next[index])
+      ) {
+        return current;
+      }
+
+      return next;
+    });
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frameId);
+  };
+}, [pathname, navigableMenus, storageReady]);
 
   // میانبر جستجوی سریع
   useEffect(() => {

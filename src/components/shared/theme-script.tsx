@@ -1,29 +1,31 @@
-import Script from "next/script";
 
 const script = `
 (function () {
   try {
-    var t = localStorage.getItem("theme");
-    var d =
-      t === "dark" ||
-      (t !== "light" &&
+    var root = document.documentElement;
+
+    var theme = localStorage.getItem("theme");
+    var dark =
+      theme === "dark" ||
+      (theme !== "light" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    var r = document.documentElement;
-    r.classList.toggle("dark", d);
-    r.style.colorScheme = d ? "dark" : "light";
+    var palette = localStorage.getItem("palette");
+    palette = palette === "indigo" ? "indigo" : "neutral";
+
+    root.classList.toggle("dark", dark);
+    root.style.colorScheme = dark ? "dark" : "light";
+    root.dataset.palette = palette;
   } catch (e) {}
 })();
 `;
 
 export function ThemeScript({ nonce }: { nonce?: string }) {
   return (
-    <Script
+    <script
       id="theme-initializer"
-      strategy="beforeInteractive"
       nonce={nonce}
-    >
-      {script}
-    </Script>
+      dangerouslySetInnerHTML={{ __html: script }}
+    />
   );
 }

@@ -13,7 +13,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -336,40 +336,61 @@ export function MenusTree({
   onDelete,
 }: MenusTreeProps) {
   const [search, setSearch] = useState("");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const tree = useMemo(() => buildMenuTree(menus), [menus]);
+const [expandedState, setExpandedState] = useState<{
+  source: MenuDto[];
+  ids: Set<string>;
+}>(() => ({
+  source: menus,
+  ids: new Set(menus.map((menu) => menu.id)),
+}));
 
-  const filteredTree = useMemo(
-    () => filterMenuTree(tree, search),
-    [tree, search],
-  );
+const expandedIds =
+  expandedState.source === menus
+    ? expandedState.ids
+    : new Set(menus.map((menu) => menu.id));
 
-  useEffect(() => {
-    setExpandedIds(new Set(menus.map((menu) => menu.id)));
-  }, [menus]);
+const tree = useMemo(() => buildMenuTree(menus), [menus]);
 
-  function toggleNode(id: string) {
-    setExpandedIds((current) => {
-      const next = new Set(current);
+const filteredTree = useMemo(
+  () => filterMenuTree(tree, search),
+  [tree, search],
+);
 
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+function toggleNode(id: string) {
+  setExpandedState((current) => {
+    const next = new Set(
+      current.source === menus
+        ? current.ids
+        : menus.map((menu) => menu.id),
+    );
 
-      return next;
-    });
-  }
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
 
-  function expandAll() {
-    setExpandedIds(new Set(menus.map((menu) => menu.id)));
-  }
+    return {
+      source: menus,
+      ids: next,
+    };
+  });
+}
 
-  function collapseAll() {
-    setExpandedIds(new Set());
-  }
+function expandAll() {
+  setExpandedState({
+    source: menus,
+    ids: new Set(menus.map((menu) => menu.id)),
+  });
+}
+
+function collapseAll() {
+  setExpandedState({
+    source: menus,
+    ids: new Set(),
+  });
+}
 
   return (
     <div className="flex flex-col gap-4">

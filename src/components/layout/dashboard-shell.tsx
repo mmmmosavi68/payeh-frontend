@@ -12,7 +12,6 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Link } from "@/i18n/navigation";
 import { localeDirections } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
@@ -20,6 +19,7 @@ import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
 import { useLogout } from "@/features/auth/use-logout";
 import { PermissionProvider } from "@/features/permissions/permission-provider";
+import { PaletteSwitcher } from "@/components/shared/palette-switcher";
 
 type LogoutLinkProps = {
   collapsed?: boolean;
@@ -98,11 +98,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
         <Brand />
 
-        <div className="ms-auto flex items-center gap-2">
-          <LocaleSwitcher />
-          <ThemeToggle />
-          <UserMenu dir={dir} />
-        </div>
+<div className="ms-auto flex items-center gap-2">
+  <LocaleSwitcher />
+  <PaletteSwitcher />
+  <ThemeToggle />
+  <UserMenu dir={dir} />
+</div>
       </header>
 
       {/* Desktop sidebar */}

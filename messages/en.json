@@ -4,6 +4,11 @@
     "brandMark": "P",
     "otherLanguage": "فارسی",
     "switchLanguage": "Switch language",
+    "palette": "Color palette",
+    "palettes": {
+      "neutral": "Neutral (Current)",
+      "indigo": "Indigo"
+    },
     "toggleTheme": "Toggle theme",
     "openMenu": "Open menu",
     "collapseSidebar": "Collapse sidebar",

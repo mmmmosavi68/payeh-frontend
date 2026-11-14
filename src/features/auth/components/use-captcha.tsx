@@ -31,7 +31,15 @@ export function useCaptcha(config: AuthConfig) {
     }
   }, [config.captchaEnabled]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+useEffect(() => {
+  const timerId = window.setTimeout(() => {
+    void refresh();
+  }, 0);
+
+  return () => {
+    window.clearTimeout(timerId);
+  };
+}, [refresh]);
 
   const token = challenge && code.trim() ? `${challenge.captchaId}:${code.trim()}` : null;
   const element = config.captchaEnabled ? (
