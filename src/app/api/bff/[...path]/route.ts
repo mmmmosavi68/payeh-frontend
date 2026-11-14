@@ -75,8 +75,20 @@ const rules: Rule[] = [
     auth: true,
     session: "none",
   },
-  { method: "POST", pattern: /^user-management\/bulk\/deactivate$/i, auth: true, session: "none" },
-  { method: "DELETE", pattern: /^user-management\/bulk$/i, auth: true, session: "none" },
+  {
+    method: "POST",
+    pattern: /^user-management\/bulk\/deactivate$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "DELETE",
+    pattern: /^user-management\/bulk$/i,
+    auth: true,
+    session: "none",
+  },
+  { method: "POST", pattern: /^UserManagement\/bulk\/deactivate$/i, auth: true, session: "none" },
+  { method: "DELETE", pattern: /^UserManagement\/bulk$/i, auth: true, session: "none" },
 
   // Groups
   { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
@@ -367,8 +379,16 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       body = text;
     }
   }
+  const backendPath = path.replace(/^user-management(?=\/|$)/i, "UserManagement");
 
-  const input: CallInput = { ...clientContext(request), method, path, search, body };
+  const input: CallInput = {
+    ...clientContext(request),
+    method,
+    path: backendPath,
+    search,
+    body,
+  };
+
   return rule.auth ? handleAuthed(request, rule, input) : handlePublic(request, rule, input);
 }
 
