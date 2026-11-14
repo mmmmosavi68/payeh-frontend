@@ -3,8 +3,8 @@
 
 import { Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useTransition } from "react";
-
+import { useEffect, useTransition } from "react";
+import { syncThemeFromStorage } from "@/lib/theme";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,9 @@ export function LocaleSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-
+useEffect(() => {
+  syncThemeFromStorage();
+}, [locale]);
   const selectedLocale =
     routing.locales.find((item) => item === locale) ??
     routing.defaultLocale;

@@ -47,7 +47,11 @@ function applyPalette(palette: Palette) {
 function notifyListeners() {
   listeners.forEach((listener) => listener());
 }
-
+export function syncThemeFromStorage() {
+  apply(readTheme());
+  applyPalette(readPalette());
+  notifyListeners();
+}
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
 
