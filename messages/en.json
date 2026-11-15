@@ -196,6 +196,19 @@
       "rolesFailed": "Failed to load roles.",
       "isActive": "Account is active",
       "conflict": "The username, mobile number or national ID is already registered.",
+       "fatherName": "Father name",
+  "gender": "Gender",
+  "male": "Male",
+  "female": "Female",
+  "maritalStatus": "Marital status",
+  "single": "Single",
+  "married": "Married",
+  "religion": "Religion ID",
+  "leftHanded": "Hand preference",
+  "rightHanded": "Right-handed",
+  "leftHandedOption": "Left-handed",
+  "nationality": "Nationality ID",
+  "expireDate": "Account expiration date",
       "validation": {
         "usernameFormat": "Username must be 3 to 50 characters, start with an English letter, and contain only letters, numbers, dots and underscores.",
         "firstNameRequired": "Enter the first name",
@@ -204,7 +217,14 @@
         "emailInvalid": "Invalid email address",
         "nationalCodeInvalid": "National ID must contain 10 digits",
         "passwordMin": "Password must be at least 8 characters",
-        "rolesRequired": "Select at least one role"
+        "rolesRequired": "Select at least one role",
+          "fatherNameRequired": "Enter the father name",
+  "genderRequired": "Select gender",
+  "maritalStatusRequired": "Select marital status",
+  "religionRequired": "Enter religion ID",
+  "leftHandedRequired": "Select hand preference",
+  "nationalityRequired": "Enter nationality ID",
+  "expireDateRequired": "Enter account expiration date"
       }
     },
     "delete": {

@@ -1,3 +1,4 @@
+
 import { isIP } from "node:net";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
@@ -37,24 +38,32 @@ const rules: Rule[] = [
   { method: "POST", pattern: /^auth\/login$/i, auth: false, session: "create" },
   { method: "POST", pattern: /^auth\/login\/verify$/i, auth: false, session: "create" },
   { method: "POST", pattern: /^auth\/login\/resend$/i, auth: false, session: "none" },
-  // خروج از دستگاه جاری؛ کوکی‌ها پاک می‌شوند.
+
+  // خروج از دستگاه جاری
   { method: "POST", pattern: /^auth\/logout$/i, auth: true, session: "clear" },
 
-  // خروج از سایر دستگاه‌ها؛ کوکی دستگاه جاری حفظ می‌شود.
+  // خروج از سایر دستگاه‌ها
   { method: "POST", pattern: /^auth\/logout-all$/i, auth: true, session: "preserve" },
   { method: "GET", pattern: /^auth\/me$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^auth\/sessions$/i, auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^auth/sessions/${GUID}$`, "i"), auth: true, session: "none" },
+
   { method: "GET", pattern: /^roles$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^permissions\/me$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^auditlogs$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^home\/Test$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^home\/Test$/i, auth: true, session: "none" },
+
+  // Users
   { method: "GET", pattern: /^users$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^users$/i, auth: true, session: "none" },
   { method: "GET", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^users/${GUID}$`, "i"), auth: true, session: "none" },
+
+  // Codes - اطلاعات پایه
+  { method: "GET", pattern: /^codes\/groups$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^codes\/groups\/\d+\/items$/i, auth: true, session: "none" },
 
   // User Management
   {
@@ -93,15 +102,14 @@ const rules: Rule[] = [
   // Groups
   { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
   { method: "POST", pattern: /^groups$/i, auth: true, session: "none" },
-
   { method: "GET", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
-
   { method: "GET", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
   { method: "POST", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/${GUID}$`, "i"), auth: true, session: "none" },
-
+  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
+  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
   { method: "GET", pattern: /^groups\/available-menus$/i, auth: true, session: "none" },
   { method: "GET", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
@@ -112,31 +120,13 @@ const rules: Rule[] = [
   { method: "GET", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
-
-  // Groups
-  { method: "GET", pattern: /^groups$/i, auth: true, session: "none" },
-  { method: "POST", pattern: /^groups$/i, auth: true, session: "none" },
-
-  { method: "GET", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
-  { method: "PUT", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
-  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}$`, "i"), auth: true, session: "none" },
-
-  { method: "GET", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
-  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users$`, "i"), auth: true, session: "none" },
-  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/${GUID}$`, "i"), auth: true, session: "none" },
-
-  // Bulk Group Users
-  { method: "POST", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
-  { method: "DELETE", pattern: new RegExp(`^groups/${GUID}/users/bulk$`, "i"), auth: true, session: "none" },
-
-  // Group Menu Access
-  { method: "GET", pattern: /^groups\/available-menus$/i, auth: true, session: "none" },
-  { method: "GET", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
-  { method: "PUT", pattern: new RegExp(`^groups/${GUID}/menu-access$`, "i"), auth: true, session: "none" },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
-  return NextResponse.json({ isSuccess: false, statusCode, message }, { status: httpStatus, headers: NO_STORE });
+  return NextResponse.json(
+    { isSuccess: false, statusCode, message },
+    { status: httpStatus, headers: NO_STORE },
+  );
 }
 
 function unauthorized() {
@@ -146,7 +136,10 @@ function unauthorized() {
 }
 
 function loggedOut() {
-  const response = NextResponse.json({ isSuccess: true, statusCode: ApiStatus.Success, message: "" }, { headers: NO_STORE });
+  const response = NextResponse.json(
+    { isSuccess: true, statusCode: ApiStatus.Success, message: "" },
+    { headers: NO_STORE },
+  );
   clearSessionCookies(response);
   return response;
 }
@@ -232,14 +225,21 @@ function createSession(request: NextRequest, result: BackendResult): NextRespons
   const envelope = parsed as { isSuccess?: boolean; data?: unknown };
   const { tokens, publicData } = splitSession(envelope.data);
 
-  // اگر لاگین نهایی بوده (نیاز به OTP نداشته) ولی توکنی استخراج نشده، خطای واضح بده
-  const requiresOtp = publicData && typeof publicData === "object" && (publicData as { requiresOtp?: boolean }).requiresOtp === true;
+  const requiresOtp =
+    publicData &&
+    typeof publicData === "object" &&
+    (publicData as { requiresOtp?: boolean }).requiresOtp === true;
+
   if (envelope.isSuccess !== false && !requiresOtp && !tokens) {
     console.error("[bff] Login response succeeded but tokens could not be parsed from data:", envelope.data);
     return fail(502, ApiStatus.ServerError, "Invalid token payload from authentication server");
   }
 
-  const response = NextResponse.json({ ...(parsed as object), data: publicData }, { status: result.status, headers: NO_STORE });
+  const response = NextResponse.json(
+    { ...(parsed as object), data: publicData },
+    { status: result.status, headers: NO_STORE },
+  );
+
   if (tokens) setSessionCookies(response, tokens);
 
   if (!request.cookies.get(COOKIE.csrf)?.value) {
@@ -256,6 +256,7 @@ function createSession(request: NextRequest, result: BackendResult): NextRespons
 
 function clientContext(request: NextRequest): ClientContext {
   let clientIp: string | undefined;
+
   if (env.TRUST_PROXY === "1") {
     const candidate = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
     if (candidate && isIP(candidate)) clientIp = candidate;
@@ -274,7 +275,11 @@ type CallInput = ClientContext & {
   body?: string;
 };
 
-async function handlePublic(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
+async function handlePublic(
+  request: NextRequest,
+  rule: Rule,
+  input: CallInput,
+): Promise<NextResponse> {
   try {
     const access = request.cookies.get(COOKIE.access)?.value;
     const result = await callBackend({ ...input, accessToken: access });
@@ -285,18 +290,25 @@ async function handlePublic(request: NextRequest, rule: Rule, input: CallInput):
   }
 }
 
-async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
+async function handleAuthed(
+  request: NextRequest,
+  rule: Rule,
+  input: CallInput,
+): Promise<NextResponse> {
   const state: { tokens: Tokens | null } = { tokens: null };
   let access = request.cookies.get(COOKIE.access)?.value;
   const refresh = request.cookies.get(COOKIE.refresh)?.value;
 
   const renew = async (): Promise<boolean> => {
     if (!refresh) return false;
+
     const tokens = await refreshTokens(refresh, {
       clientIp: input.clientIp,
       userAgent: input.userAgent,
     });
+
     if (!tokens) return false;
+
     state.tokens = tokens;
     access = tokens.accessToken;
     return true;
@@ -317,13 +329,10 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
     }
 
     if (rule.session === "clear") return loggedOut();
-
     if (result.status === 401) return unauthorized();
 
     const response = relay(result);
 
-    // اگر در حین درخواست Refresh Token انجام شده باشد،
-    // کوکی‌های جدید را روی همان مرورگر ثبت می‌کنیم.
     if (state.tokens) {
       setSessionCookies(response, state.tokens);
     }
@@ -335,50 +344,68 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
   }
 }
 
-async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
+async function handle(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> },
+): Promise<NextResponse> {
   console.log("[BFF HIT]", request.method, request.url);
+
   const { path: segments } = await context.params;
   const path = segments.join("/");
   const method = request.method as Method;
 
   const rule = rules.find((r) => r.method === method && r.pattern.test(path));
+
   console.log("[BFF PATH]", path);
   console.log("[BFF RULE]", rule);
+
   if (!rule) return fail(404, ApiStatus.NotFound, "Not found");
 
   if (method !== "GET") {
     if (!isSameOrigin(request)) {
       return fail(403, ApiStatus.Forbidden, "Forbidden");
     }
+
     const cookieToken = request.cookies.get(COOKIE.csrf)?.value ?? "";
     const headerToken = request.headers.get(CSRF_HEADER) ?? "";
+
     if (!cookieToken || !safeEqual(cookieToken, headerToken)) {
       return fail(403, ApiStatus.Forbidden, "Forbidden");
     }
   }
 
   let search: string | undefined;
+
   if (method === "GET") {
     search = request.nextUrl.search;
-    if (search.length > MAX_QUERY) return fail(414, ApiStatus.BadRequest, "URI too long");
+
+    if (search.length > MAX_QUERY) {
+      return fail(414, ApiStatus.BadRequest, "URI too long");
+    }
   }
 
   let body: string | undefined;
+
   if (method === "POST" || method === "PUT" || method === "DELETE") {
     if (Number(request.headers.get("content-length") ?? "0") > MAX_BODY) {
       return fail(413, ApiStatus.BadRequest, "Payload too large");
     }
+
     const text = await request.text();
+
     if (text.length > MAX_BODY) {
       return fail(413, ApiStatus.BadRequest, "Payload too large");
     }
+
     if (text !== "") {
       if (!request.headers.get("content-type")?.includes("application/json")) {
         return fail(415, ApiStatus.BadRequest, "Unsupported media type");
       }
+
       body = text;
     }
   }
+
   const backendPath = path.replace(/^user-management(?=\/|$)/i, "UserManagement");
 
   const input: CallInput = {
@@ -389,7 +416,9 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
     body,
   };
 
-  return rule.auth ? handleAuthed(request, rule, input) : handlePublic(request, rule, input);
+  return rule.auth
+    ? handleAuthed(request, rule, input)
+    : handlePublic(request, rule, input);
 }
 
 export const GET = handle;

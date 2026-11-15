@@ -1,9 +1,16 @@
+
 import { z } from "zod";
 import { apiRequest } from "@/lib/api/client";
 import { toLatinDigits } from "@/lib/digits";
 import { parseApiDate } from "@/lib/dates";
 import type { PagedResult } from "@/types/common";
-import type { CreateUserInput, RoleInfo, UpdateUserInput, UserQuery, UserRecord } from "@/types/user";
+import type {
+  CreateUserInput,
+  RoleInfo,
+  UpdateUserInput,
+  UserQuery,
+  UserRecord,
+} from "@/types/user";
 
 const roleSchema = z.object({
   id: z.number(),
@@ -14,16 +21,27 @@ const roleSchema = z.object({
 const userSchema = z.object({
   id: z.string(),
   userName: z.string(),
+
   emailAddress: z.string().nullish(),
   phoneNumber: z.string().nullish(),
   phoneNumberConfirmed: z.boolean().nullable().optional(),
-  expireDate: z.string().optional(),
+
+  expireDate: z.string().nullish(),
   isActive: z.boolean(),
   createdDate: z.string(),
   lastLoginDate: z.string().nullish(),
+
   firstName: z.string().nullish(),
   lastName: z.string().nullish(),
+  fatherName: z.string().nullish(),
   nationalCode: z.string().nullish(),
+
+  gender: z.number().nullable().optional(),
+  maritalStatus: z.number().nullable().optional(),
+  religion: z.number().nullable().optional(),
+  leftHanded: z.number().nullable().optional(),
+  nationality: z.number().nullable().optional(),
+
   roles: z.array(roleSchema),
 });
 
@@ -34,31 +52,55 @@ const pagedSchema = z.object({
   pageSize: z.number(),
 });
 
-function toRecord(user: z.infer<typeof userSchema>): UserRecord {
+type ApiUser = z.infer<typeof userSchema>;
+
+function toRecord(user: ApiUser): UserRecord {
   return {
     id: user.id,
     userName: user.userName,
+
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
+    fatherName: user.fatherName ?? "",
+
     phone: user.phoneNumber ?? "",
     email: user.emailAddress ?? "",
     nationalCode: user.nationalCode ?? "",
+
+    gender: user.gender ?? null,
+    maritalStatus: user.maritalStatus ?? null,
+    religion: user.religion ?? null,
+    leftHanded: user.leftHanded ?? null,
+    nationality: user.nationality ?? null,
+
     roles: user.roles,
     isActive: user.isActive,
+
     createdAt: parseApiDate(user.createdDate).toISOString(),
-    lastLoginAt: user.lastLoginDate ? parseApiDate(user.lastLoginDate).toISOString() : null,
+    lastLoginAt: user.lastLoginDate
+      ? parseApiDate(user.lastLoginDate).toISOString()
+      : null,
+
     phoneNumberConfirmed: user.phoneNumberConfirmed ?? null,
-    expireDate: user.expireDate ? parseApiDate(user.expireDate).toISOString() : null,
+
+    expireDate: user.expireDate
+      ? parseApiDate(user.expireDate).toISOString()
+      : null,
   };
 }
 
-export async function listUsers(query: UserQuery): Promise<PagedResult<UserRecord>> {
+export async function listUsers(
+  query: UserQuery,
+): Promise<PagedResult<UserRecord>> {
   const data = await apiRequest("users", {
     query: {
       pageNumber: query.page,
       pageSize: query.pageSize,
       search: toLatinDigits(query.search.trim()) || undefined,
-      isActive: query.status === "all" ? undefined : query.status === "active",
+      isActive:
+        query.status === "all"
+          ? undefined
+          : query.status === "active",
       roleId: query.roleId ?? undefined,
       sortBy: query.sort,
       sortDirection: query.dir,
@@ -75,43 +117,60 @@ export async function listUsers(query: UserQuery): Promise<PagedResult<UserRecor
 }
 
 export async function getUserById(id: string): Promise<UserRecord> {
-  const user = await apiRequest(`users/${id}`, { schema: userSchema });
-  return toRecord(user);
-}
-
-export async function createUser(input: CreateUserInput): Promise<UserRecord> {
-  const user = await apiRequest("users", {
-    method: "POST",
-    body: {
-      userName: input.userName,
-      phoneNumber: input.phone,
-      emailAddress: input.email || undefined,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      nationalCode: input.nationalCode,
-      password: input.password || undefined,
-      roleIds: input.roleIds,
-      isActive: input.isActive,
-    },
+  const user = await apiRequest(`users/${id}`, {
     schema: userSchema,
   });
 
   return toRecord(user);
 }
 
-export async function updateUser(id: string, input: UpdateUserInput): Promise<UserRecord> {
+function toApiBody(input: CreateUserInput | UpdateUserInput) {
+  return {
+    userName: input.userName.trim(),
+
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
+    fatherName: input.fatherName.trim(),
+
+    phoneNumber: input.phone.trim(),
+    emailAddress: input.email.trim(),
+
+    nationalCode: toLatinDigits(input.nationalCode.trim()),
+
+    gender: input.gender,
+    maritalStatus: input.maritalStatus,
+    religion: input.religion,
+    leftHanded: input.leftHanded,
+    nationality: input.nationality,
+
+    expireDate: input.expireDate,
+
+    password: input.password || undefined,
+
+    roleIds: input.roleIds,
+    isActive: input.isActive,
+  };
+}
+
+export async function createUser(
+  input: CreateUserInput,
+): Promise<UserRecord> {
+  const user = await apiRequest("users", {
+    method: "POST",
+    body: toApiBody(input),
+    schema: userSchema,
+  });
+
+  return toRecord(user);
+}
+
+export async function updateUser(
+  id: string,
+  input: UpdateUserInput,
+): Promise<UserRecord> {
   const user = await apiRequest(`users/${id}`, {
     method: "PUT",
-    body: {
-      firstName: input.firstName,
-      lastName: input.lastName,
-      phoneNumber: input.phone,
-      // بک‌اند رشته‌ی خالی را ایمیل نامعتبر می‌داند؛ پس خالی ارسال نمی‌شود.
-      emailAddress: input.email || undefined,
-      password: input.password || undefined,
-      roleIds: input.roleIds,
-      isActive: input.isActive,
-    },
+    body: toApiBody(input),
     schema: userSchema,
   });
 
@@ -119,11 +178,43 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  await apiRequest(`users/${id}`, { method: "DELETE", schema: z.unknown() });
+  await apiRequest("users", {
+    method: "DELETE",
+    query: { id },
+    schema: z.unknown(),
+  });
 }
 
 export async function listRoles(): Promise<RoleInfo[]> {
-  return apiRequest("roles", { schema: z.array(roleSchema) });
+  return apiRequest("roles", {
+    schema: z.array(roleSchema),
+  });
+}
+
+const codeOptionSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  parentId: z.number().nullable().optional(),
+  standardCode: z.number().nullable().optional(),
+  primaryCode: z.number().nullable().optional(),
+  subCode: z.number().nullable().optional(),
+  additionalInformation: z.string().nullable().optional(),
+});
+
+export type CodeOption = z.infer<typeof codeOptionSchema>;
+
+export async function getCodeItems(
+  primaryCode: number,
+): Promise<CodeOption[]> {
+  const items = await apiRequest(
+    `codes/groups/${primaryCode}/items`,
+    {
+      schema: z.array(codeOptionSchema),
+    },
+  );
+
+  // حذف رکوردهای placeholder مانند ". . ."
+  return items.filter((item) => (item.subCode ?? 0) > 1);
 }
 
 const userMenuSchema = z.object({
@@ -138,19 +229,26 @@ const userMenuSchema = z.object({
 
 export type UserAvailableMenu = z.infer<typeof userMenuSchema>;
 
-export async function getUserAvailableMenus(): Promise<UserAvailableMenu[]> {
+export async function getUserAvailableMenus(): Promise<
+  UserAvailableMenu[]
+> {
   return apiRequest("user-management/available-menus", {
     schema: z.array(userMenuSchema),
   });
 }
 
-export async function getUserMenuAccess(userId: string): Promise<string[]> {
+export async function getUserMenuAccess(
+  userId: string,
+): Promise<string[]> {
   return apiRequest(`user-management/${userId}/menu-access`, {
     schema: z.array(z.string()),
   });
 }
 
-export async function updateUserMenuAccess(userId: string, menuIds: string[]): Promise<void> {
+export async function updateUserMenuAccess(
+  userId: string,
+  menuIds: string[],
+): Promise<void> {
   await apiRequest(`user-management/${userId}/menu-access`, {
     method: "PUT",
     body: { menuIds },
@@ -158,7 +256,9 @@ export async function updateUserMenuAccess(userId: string, menuIds: string[]): P
   });
 }
 
-export async function bulkDeactivateUsers(userIds: string[]): Promise<void> {
+export async function bulkDeactivateUsers(
+  userIds: string[],
+): Promise<void> {
   await apiRequest("user-management/bulk/deactivate", {
     method: "POST",
     body: { userIds },
@@ -166,7 +266,9 @@ export async function bulkDeactivateUsers(userIds: string[]): Promise<void> {
   });
 }
 
-export async function bulkDeleteUsers(userIds: string[]): Promise<void> {
+export async function bulkDeleteUsers(
+  userIds: string[],
+): Promise<void> {
   await apiRequest("user-management/bulk", {
     method: "DELETE",
     body: { userIds },

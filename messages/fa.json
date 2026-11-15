@@ -196,6 +196,19 @@
       "rolesFailed": "بارگذاری نقش‌ها ناموفق بود.",
       "isActive": "حساب کاربری فعال باشد",
       "conflict": "نام کاربری، شماره موبایل یا کد ملی قبلاً ثبت شده است.",
+        "fatherName": "نام پدر",
+  "gender": "جنسیت",
+  "male": "مرد",
+  "female": "زن",
+  "maritalStatus": "وضعیت تأهل",
+  "single": "مجرد",
+  "married": "متأهل",
+  "religion": "شناسه دین",
+  "leftHanded": "وضعیت دست‌برتری",
+  "rightHanded": "راست‌دست",
+  "leftHandedOption": "چپ‌دست",
+  "nationality": "شناسه ملیت",
+  "expireDate": "تاریخ انقضای حساب",
       "validation": {
         "usernameFormat": "نام کاربری باید ۳ تا ۵۰ کاراکتر باشد، با حرف انگلیسی شروع شود و فقط حروف، عدد، نقطه و زیرخط داشته باشد",
         "firstNameRequired": "نام را وارد کنید",
@@ -204,7 +217,14 @@
         "emailInvalid": "ایمیل معتبر نیست",
         "nationalCodeInvalid": "کد ملی باید ۱۰ رقم باشد",
         "passwordMin": "رمز عبور حداقل ۸ کاراکتر باشد",
-        "rolesRequired": "حداقل یک نقش انتخاب کنید"
+        "rolesRequired": "حداقل یک نقش انتخاب کنید",
+          "fatherNameRequired": "نام پدر را وارد کنید",
+  "genderRequired": "جنسیت را انتخاب کنید",
+  "maritalStatusRequired": "وضعیت تأهل را انتخاب کنید",
+  "religionRequired": "شناسه دین را وارد کنید",
+  "leftHandedRequired": "وضعیت دست‌برتری را انتخاب کنید",
+  "nationalityRequired": "شناسه ملیت را وارد کنید",
+  "expireDateRequired": "تاریخ انقضای حساب را وارد کنید"
       }
     },
     "delete": {
