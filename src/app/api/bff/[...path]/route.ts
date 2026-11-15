@@ -1,4 +1,3 @@
-
 import { isIP } from "node:net";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
@@ -64,6 +63,11 @@ const rules: Rule[] = [
   // Codes - اطلاعات پایه
   { method: "GET", pattern: /^codes\/groups$/i, auth: true, session: "none" },
   { method: "GET", pattern: /^codes\/groups\/\d+\/items$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^codes$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^codes\/\d+$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^codes$/i, auth: true, session: "none" },
+  { method: "PUT", pattern: /^codes\/\d+$/i, auth: true, session: "none" },
+  { method: "DELETE", pattern: /^codes\/\d+$/i, auth: true, session: "none" },
 
   // User Management
   {
@@ -123,10 +127,7 @@ const rules: Rule[] = [
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
-  return NextResponse.json(
-    { isSuccess: false, statusCode, message },
-    { status: httpStatus, headers: NO_STORE },
-  );
+  return NextResponse.json({ isSuccess: false, statusCode, message }, { status: httpStatus, headers: NO_STORE });
 }
 
 function unauthorized() {
@@ -136,10 +137,7 @@ function unauthorized() {
 }
 
 function loggedOut() {
-  const response = NextResponse.json(
-    { isSuccess: true, statusCode: ApiStatus.Success, message: "" },
-    { headers: NO_STORE },
-  );
+  const response = NextResponse.json({ isSuccess: true, statusCode: ApiStatus.Success, message: "" }, { headers: NO_STORE });
   clearSessionCookies(response);
   return response;
 }
@@ -225,20 +223,14 @@ function createSession(request: NextRequest, result: BackendResult): NextRespons
   const envelope = parsed as { isSuccess?: boolean; data?: unknown };
   const { tokens, publicData } = splitSession(envelope.data);
 
-  const requiresOtp =
-    publicData &&
-    typeof publicData === "object" &&
-    (publicData as { requiresOtp?: boolean }).requiresOtp === true;
+  const requiresOtp = publicData && typeof publicData === "object" && (publicData as { requiresOtp?: boolean }).requiresOtp === true;
 
   if (envelope.isSuccess !== false && !requiresOtp && !tokens) {
     console.error("[bff] Login response succeeded but tokens could not be parsed from data:", envelope.data);
     return fail(502, ApiStatus.ServerError, "Invalid token payload from authentication server");
   }
 
-  const response = NextResponse.json(
-    { ...(parsed as object), data: publicData },
-    { status: result.status, headers: NO_STORE },
-  );
+  const response = NextResponse.json({ ...(parsed as object), data: publicData }, { status: result.status, headers: NO_STORE });
 
   if (tokens) setSessionCookies(response, tokens);
 
@@ -275,11 +267,7 @@ type CallInput = ClientContext & {
   body?: string;
 };
 
-async function handlePublic(
-  request: NextRequest,
-  rule: Rule,
-  input: CallInput,
-): Promise<NextResponse> {
+async function handlePublic(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
   try {
     const access = request.cookies.get(COOKIE.access)?.value;
     const result = await callBackend({ ...input, accessToken: access });
@@ -290,11 +278,7 @@ async function handlePublic(
   }
 }
 
-async function handleAuthed(
-  request: NextRequest,
-  rule: Rule,
-  input: CallInput,
-): Promise<NextResponse> {
+async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput): Promise<NextResponse> {
   const state: { tokens: Tokens | null } = { tokens: null };
   let access = request.cookies.get(COOKIE.access)?.value;
   const refresh = request.cookies.get(COOKIE.refresh)?.value;
@@ -344,10 +328,7 @@ async function handleAuthed(
   }
 }
 
-async function handle(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> },
-): Promise<NextResponse> {
+async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
   console.log("[BFF HIT]", request.method, request.url);
 
   const { path: segments } = await context.params;
@@ -416,9 +397,7 @@ async function handle(
     body,
   };
 
-  return rule.auth
-    ? handleAuthed(request, rule, input)
-    : handlePublic(request, rule, input);
+  return rule.auth ? handleAuthed(request, rule, input) : handlePublic(request, rule, input);
 }
 
 export const GET = handle;
