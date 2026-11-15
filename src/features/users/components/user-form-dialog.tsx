@@ -253,12 +253,13 @@ useEffect(() => {
     [t, schemaOptions],
   );
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<UserFormValues>({
+const {
+  register,
+  handleSubmit,
+  control,
+  setValue,
+  formState: { errors, isSubmitting },
+} = useForm<UserFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       username: user?.userName ?? "",
@@ -300,7 +301,38 @@ useEffect(() => {
       isActive: user?.isActive ?? true,
     },
   });
+useEffect(() => {
+  if (!codeOptions) return;
 
+  setValue(
+    "gender",
+    user?.gender != null ? String(user.gender) : "10",
+  );
+
+  setValue(
+    "maritalStatus",
+    user?.maritalStatus != null
+      ? String(user.maritalStatus)
+      : "10",
+  );
+
+  setValue(
+    "religion",
+    user?.religion != null ? String(user.religion) : "",
+  );
+
+  setValue(
+    "leftHanded",
+    normalizeLeftHanded(user?.leftHanded),
+  );
+
+  setValue(
+    "nationality",
+    user?.nationality != null
+      ? String(user.nationality)
+      : "",
+  );
+}, [codeOptions, user, setValue]);
   async function onSubmit(values: UserFormValues) {
     setFormError(null);
 
