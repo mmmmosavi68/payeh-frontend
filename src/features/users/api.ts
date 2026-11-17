@@ -1,16 +1,9 @@
-
 import { z } from "zod";
 import { apiRequest } from "@/lib/api/client";
 import { toLatinDigits } from "@/lib/digits";
 import { parseApiDate } from "@/lib/dates";
 import type { PagedResult } from "@/types/common";
-import type {
-  CreateUserInput,
-  RoleInfo,
-  UpdateUserInput,
-  UserQuery,
-  UserRecord,
-} from "@/types/user";
+import type { CreateUserInput, RoleInfo, UpdateUserInput, UserQuery, UserRecord } from "@/types/user";
 
 const roleSchema = z.object({
   id: z.number(),
@@ -77,30 +70,21 @@ function toRecord(user: ApiUser): UserRecord {
     isActive: user.isActive,
 
     createdAt: parseApiDate(user.createdDate).toISOString(),
-    lastLoginAt: user.lastLoginDate
-      ? parseApiDate(user.lastLoginDate).toISOString()
-      : null,
+    lastLoginAt: user.lastLoginDate ? parseApiDate(user.lastLoginDate).toISOString() : null,
 
     phoneNumberConfirmed: user.phoneNumberConfirmed ?? null,
 
-    expireDate: user.expireDate
-      ? parseApiDate(user.expireDate).toISOString()
-      : null,
+    expireDate: user.expireDate ? parseApiDate(user.expireDate).toISOString() : null,
   };
 }
 
-export async function listUsers(
-  query: UserQuery,
-): Promise<PagedResult<UserRecord>> {
+export async function listUsers(query: UserQuery): Promise<PagedResult<UserRecord>> {
   const data = await apiRequest("users", {
     query: {
       pageNumber: query.page,
       pageSize: query.pageSize,
       search: toLatinDigits(query.search.trim()) || undefined,
-      isActive:
-        query.status === "all"
-          ? undefined
-          : query.status === "active",
+      isActive: query.status === "all" ? undefined : query.status === "active",
       roleId: query.roleId ?? undefined,
       sortBy: query.sort,
       sortDirection: query.dir,
@@ -152,9 +136,7 @@ function toApiBody(input: CreateUserInput | UpdateUserInput) {
   };
 }
 
-export async function createUser(
-  input: CreateUserInput,
-): Promise<UserRecord> {
+export async function createUser(input: CreateUserInput): Promise<UserRecord> {
   const user = await apiRequest("users", {
     method: "POST",
     body: toApiBody(input),
@@ -164,10 +146,7 @@ export async function createUser(
   return toRecord(user);
 }
 
-export async function updateUser(
-  id: string,
-  input: UpdateUserInput,
-): Promise<UserRecord> {
+export async function updateUser(id: string, input: UpdateUserInput): Promise<UserRecord> {
   const user = await apiRequest(`users/${id}`, {
     method: "PUT",
     body: toApiBody(input),
@@ -203,15 +182,10 @@ const codeOptionSchema = z.object({
 
 export type CodeOption = z.infer<typeof codeOptionSchema>;
 
-export async function getCodeItems(
-  primaryCode: number,
-): Promise<CodeOption[]> {
-  const items = await apiRequest(
-    `codes/groups/${primaryCode}/items`,
-    {
-      schema: z.array(codeOptionSchema),
-    },
-  );
+export async function getCodeItems(primaryCode: number): Promise<CodeOption[]> {
+  const items = await apiRequest(`codes/groups/${primaryCode}/items`, {
+    schema: z.array(codeOptionSchema),
+  });
 
   // حذف رکوردهای placeholder مانند ". . ."
   return items.filter((item) => (item.subCode ?? 0) > 1);
@@ -229,26 +203,19 @@ const userMenuSchema = z.object({
 
 export type UserAvailableMenu = z.infer<typeof userMenuSchema>;
 
-export async function getUserAvailableMenus(): Promise<
-  UserAvailableMenu[]
-> {
+export async function getUserAvailableMenus(): Promise<UserAvailableMenu[]> {
   return apiRequest("user-management/available-menus", {
     schema: z.array(userMenuSchema),
   });
 }
 
-export async function getUserMenuAccess(
-  userId: string,
-): Promise<string[]> {
+export async function getUserMenuAccess(userId: string): Promise<string[]> {
   return apiRequest(`user-management/${userId}/menu-access`, {
     schema: z.array(z.string()),
   });
 }
 
-export async function updateUserMenuAccess(
-  userId: string,
-  menuIds: string[],
-): Promise<void> {
+export async function updateUserMenuAccess(userId: string, menuIds: string[]): Promise<void> {
   await apiRequest(`user-management/${userId}/menu-access`, {
     method: "PUT",
     body: { menuIds },
@@ -256,9 +223,44 @@ export async function updateUserMenuAccess(
   });
 }
 
-export async function bulkDeactivateUsers(
-  userIds: string[],
-): Promise<void> {
+const userUniversitySchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  parentUniversityId: z.number().nullable().optional(),
+});
+
+export type UserAvailableUniversity = z.infer<typeof userUniversitySchema>;
+
+/**
+ * دریافت فهرست دانشگاه‌های قابل تخصیص به کاربران
+ */
+export async function getUserAvailableUniversities(): Promise<UserAvailableUniversity[]> {
+  return apiRequest("user-management/available-universities", {
+    schema: z.array(userUniversitySchema),
+  });
+}
+
+/**
+ * دریافت دانشگاه‌های تخصیص‌یافته به یک کاربر
+ */
+export async function getUserUniversityAccess(userId: string): Promise<number[]> {
+  return apiRequest(`user-management/${userId}/university-access`, {
+    schema: z.array(z.number()),
+  });
+}
+
+/**
+ * به‌روزرسانی دسترسی دانشگاه‌های یک کاربر
+ */
+export async function updateUserUniversityAccess(userId: string, universityIds: number[]): Promise<void> {
+  await apiRequest(`user-management/${userId}/university-access`, {
+    method: "PUT",
+    body: { universityIds },
+    schema: z.unknown(),
+  });
+}
+
+export async function bulkDeactivateUsers(userIds: string[]): Promise<void> {
   await apiRequest("user-management/bulk/deactivate", {
     method: "POST",
     body: { userIds },
@@ -266,9 +268,7 @@ export async function bulkDeactivateUsers(
   });
 }
 
-export async function bulkDeleteUsers(
-  userIds: string[],
-): Promise<void> {
+export async function bulkDeleteUsers(userIds: string[]): Promise<void> {
   await apiRequest("user-management/bulk", {
     method: "DELETE",
     body: { userIds },

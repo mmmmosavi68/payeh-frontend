@@ -61,6 +61,7 @@ import { UserFormDialog } from "./user-form-dialog";
 import { usePermission } from "@/features/permissions/use-permission";
 import { UserMenuAccessAction } from "./user-menu-access-dialog";
 import { UserBulkActions } from "./user-bulk-actions";
+import { UserUniversityAccessAction } from "./user-university-access-dialog";
 
 const PAGE_SIZE = 10;
 
@@ -649,10 +650,11 @@ export function UsersTable() {
                         </TableCell>
 
                         <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            <UserMenuAccessAction user={user} />
+                      <div className="flex items-center justify-end gap-1">
+  <UserMenuAccessAction user={user} />
+  <UserUniversityAccessAction user={user} />
 
-                            <RowActions
+  <RowActions
                               user={user}
                               dir={dir}
                               canDelete={
@@ -706,10 +708,11 @@ export function UsersTable() {
                         <UserCell user={user} />
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-1">
-                        <UserMenuAccessAction user={user} />
+                 <div className="flex shrink-0 items-center gap-1">
+  <UserMenuAccessAction user={user} />
+  <UserUniversityAccessAction user={user} />
 
-                        <RowActions
+  <RowActions
                           user={user}
                           dir={dir}
                           canDelete={

@@ -15,7 +15,7 @@ export function getUniversityTypeOptions(codes: CodeDto[]): UniversityTypeOption
   }
 
   return codes
-    .filter((code) => code.parentId === group.id && code.isActive && !code.isDeleted && code.title?.trim())
+    .filter((code) => code.parentId === group.id && code.isActive && code.title?.trim())
     .map((code) => ({
       id: code.id,
       title: code.title.trim(),
