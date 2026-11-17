@@ -6,27 +6,20 @@ export interface ExamCodeOption {
   title: string;
 }
 
-function getGroupItems(
-  codes: CodeDto[],
-  groupTitle: string,
-): ExamCodeOption[] {
-  const group = codes.find(
-    (item) =>
-      item.parentId === 1 &&
-      item.subCode === 0 &&
-      item.title.trim() === groupTitle &&
-      item.isActive,
-  );
+function getGroupItems(codes: CodeDto[], groupTitle: string): ExamCodeOption[] {
+  // پیدا کردن ریشه اطلاعات پایه
+  const root = codes.find((item) => item.parentId === null && item.primaryCode === 0 && item.subCode === 0 && item.isActive);
+
+  if (!root) return [];
+
+  // پیدا کردن گروه موردنظر زیر ریشه
+  const group = codes.find((item) => item.parentId === root.id && item.subCode === 0 && item.title.trim() === groupTitle && item.isActive);
 
   if (!group) return [];
 
+  // دریافت آیتم‌های زیرمجموعه گروه
   return codes
-    .filter(
-      (item) =>
-        item.parentId === group.id &&
-        item.isActive &&
-        item.title.trim(),
-    )
+    .filter((item) => item.parentId === group.id && item.isActive && item.title.trim())
     .map((item) => ({
       id: item.id,
       title: item.title,
