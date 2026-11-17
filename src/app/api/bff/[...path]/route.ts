@@ -135,6 +135,20 @@ const rules: Rule[] = [
   { method: "PUT", pattern: /^universities\/\d+$/i, auth: true, session: "none" },
   { method: "DELETE", pattern: /^universities\/\d+$/i, auth: true, session: "none" },
 
+// Exam Sessions
+{ method: "GET", pattern: /^examSessions$/i, auth: true, session: "none" },
+{ method: "GET", pattern: new RegExp(`^examSessions/${GUID}$`, "i"), auth: true, session: "none" },
+{ method: "POST", pattern: /^examSessions$/i, auth: true, session: "none" },
+{ method: "PUT", pattern: new RegExp(`^examSessions/${GUID}$`, "i"), auth: true, session: "none" },
+{ method: "DELETE", pattern: new RegExp(`^examSessions/${GUID}$`, "i"), auth: true, session: "none" },
+
+// Exams
+{ method: "GET", pattern: /^exams$/i, auth: true, session: "none" },
+{ method: "GET", pattern: new RegExp(`^exams/${GUID}$`, "i"), auth: true, session: "none" },
+{ method: "POST", pattern: /^exams$/i, auth: true, session: "none" },
+{ method: "PUT", pattern: new RegExp(`^exams/${GUID}$`, "i"), auth: true, session: "none" },
+{ method: "DELETE", pattern: new RegExp(`^exams/${GUID}$`, "i"), auth: true, session: "none" },
+
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
