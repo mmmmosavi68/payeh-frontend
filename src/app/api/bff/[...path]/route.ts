@@ -124,6 +124,17 @@ const rules: Rule[] = [
   { method: "GET", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "PUT", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
   { method: "DELETE", pattern: new RegExp(`^menus/${GUID}$`, "i"), auth: true, session: "none" },
+
+
+
+
+  // Universities
+  { method: "GET", pattern: /^universities$/i, auth: true, session: "none" },
+  { method: "GET", pattern: /^universities\/\d+$/i, auth: true, session: "none" },
+  { method: "POST", pattern: /^universities$/i, auth: true, session: "none" },
+  { method: "PUT", pattern: /^universities\/\d+$/i, auth: true, session: "none" },
+  { method: "DELETE", pattern: /^universities\/\d+$/i, auth: true, session: "none" },
+
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
