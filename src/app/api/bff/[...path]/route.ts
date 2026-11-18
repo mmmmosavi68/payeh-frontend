@@ -165,6 +165,26 @@ const rules: Rule[] = [
     auth: true,
     session: "none",
   },
+
+  // University Exam Capacities
+  {
+    method: "GET",
+    pattern: /^universityExamCapacities\/my-universities$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: /^universityExamCapacities\/universities\/\d+\/active-exams$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "PUT",
+    pattern: new RegExp(`^universityExamCapacities/universities/\\d+/exams/${GUID}/capacity$`, "i"),
+    auth: true,
+    session: "none",
+  },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
