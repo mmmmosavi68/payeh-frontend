@@ -36,6 +36,15 @@ const userSchema = z.object({
   nationality: z.number().nullable().optional(),
 
   roles: z.array(roleSchema),
+
+  universities: z
+    .array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+      }),
+    )
+    .default([]),
 });
 
 const pagedSchema = z.object({
@@ -67,6 +76,7 @@ function toRecord(user: ApiUser): UserRecord {
     nationality: user.nationality ?? null,
 
     roles: user.roles,
+    universities: user.universities,
     isActive: user.isActive,
 
     createdAt: parseApiDate(user.createdDate).toISOString(),

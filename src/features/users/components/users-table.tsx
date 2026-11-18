@@ -111,19 +111,37 @@ function RoleBadges({ roles }: { roles: UserRecord["roles"] }) {
   );
 }
 
+function UniversityBadges({
+  universities,
+}: {
+  universities: UserRecord["universities"];
+}) {
+  if (!universities.length) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {universities.map((university) => (
+        <Badge key={university.id} variant="outline">
+          {university.title}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+
 function UserCell({ user }: { user: UserRecord }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-0 items-center gap-2.5">
       <span className="grid size-9 shrink-0 place-items-center rounded-full border bg-muted text-xs font-medium">
         {initials(user)}
       </span>
 
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{fullName(user)}</p>
-        <p className="truncate text-xs text-muted-foreground" dir="ltr">
-          {user.userName}
-        </p>
-      </div>
+      <p className="truncate text-sm font-medium">
+        {fullName(user)}
+      </p>
     </div>
   );
 }
@@ -193,10 +211,10 @@ function SortHead({ label, active, dir, onClick }: SortHeadProps) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+      className="inline-flex w-full items-center justify-start gap-1.5 text-right font-medium transition-colors hover:text-foreground"
     >
       {label}
-      <Icon className="size-3.5" aria-hidden />
+      <Icon className="size-3.5 shrink-0" aria-hidden />
     </button>
   );
 }
@@ -509,48 +527,59 @@ export function UsersTable() {
         />
       ) : (
         <>
+
           {/* Desktop table */}
           <div
             aria-busy={loading}
             className={cn(
-              "hidden overflow-hidden rounded-2xl border bg-card transition-opacity md:block",
+              "hidden overflow-x-auto rounded-2xl border bg-card transition-opacity md:block",
               loading && data && "opacity-60",
             )}
           >
-            <Table>
+            <Table dir={dir} className="w-full table-auto">
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   {canBulkSelect ? (
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={
-                          allSelectableSelected
-                            ? true
-                            : someSelectableSelected
-                              ? "indeterminate"
-                              : false
-                        }
-                        disabled={selectableUsers.length === 0}
-                        onCheckedChange={(checked) =>
-                          toggleAllUsers(checked === true)
-                        }
-                        aria-label={t("management.bulk.selectUsers")}
-                      />
+                    <TableHead className="w-11 px-2 text-center">
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={
+                            allSelectableSelected
+                              ? true
+                              : someSelectableSelected
+                                ? "indeterminate"
+                                : false
+                          }
+                          disabled={selectableUsers.length === 0}
+                          onCheckedChange={(checked) =>
+                            toggleAllUsers(checked === true)
+                          }
+                          aria-label={t("management.bulk.selectUsers")}
+                        />
+                      </div>
                     </TableHead>
                   ) : null}
 
-                  <TableHead aria-sort={ariaSort(sort === "userName", sortDir)}>
-                    <SortHead
-                      label={t("columns.user")}
-                      active={sort === "userName"}
-                      dir={sortDir}
-                      onClick={() => toggleSort("userName")}
-                    />
+                  <TableHead className="text-right">
+                    {t("columns.user")}
                   </TableHead>
 
-                  <TableHead>{t("columns.phone")}</TableHead>
+                  <TableHead className="text-right">
+                    {locale === "fa" ? "نام کاربری" : "Username"}
+                  </TableHead>
 
-                  <TableHead aria-sort={ariaSort(sort === "email", sortDir)}>
+                  <TableHead className="text-right">
+                    {locale === "fa" ? "کد ملی" : "National Code"}
+                  </TableHead>
+
+                  <TableHead className="text-right">
+                    {t("columns.phone")}
+                  </TableHead>
+
+                  <TableHead
+                    className="text-right"
+                    aria-sort={ariaSort(sort === "email", sortDir)}
+                  >
                     <SortHead
                       label={t("columns.email")}
                       active={sort === "email"}
@@ -559,10 +588,20 @@ export function UsersTable() {
                     />
                   </TableHead>
 
-                  <TableHead>{t("columns.roles")}</TableHead>
-                  <TableHead>{t("columns.status")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("columns.roles")}
+                  </TableHead>
+
+                  <TableHead className="text-right">
+                    {t("columns.universities")}
+                  </TableHead>
+
+                  <TableHead className="text-right">
+                    {t("columns.status")}
+                  </TableHead>
 
                   <TableHead
+                    className="text-right"
                     aria-sort={ariaSort(sort === "lastLoginDate", sortDir)}
                   >
                     <SortHead
@@ -574,6 +613,7 @@ export function UsersTable() {
                   </TableHead>
 
                   <TableHead
+                    className="text-right"
                     aria-sort={ariaSort(sort === "createdDate", sortDir)}
                   >
                     <SortHead
@@ -584,7 +624,7 @@ export function UsersTable() {
                     />
                   </TableHead>
 
-                  <TableHead className="w-24">
+                  <TableHead className="w-28 text-center">
                     <span className="sr-only">{t("columns.actions")}</span>
                   </TableHead>
                 </TableRow>
@@ -595,10 +635,10 @@ export function UsersTable() {
                   ? Array.from({ length: 5 }, (_, index) => (
                       <TableRow key={index}>
                         {Array.from(
-                          { length: canBulkSelect ? 9 : 8 },
+                          { length: canBulkSelect ? 12 : 11 },
                           (_, cell) => (
-                            <TableCell key={cell}>
-                              <Skeleton className="h-5 w-full max-w-32" />
+                            <TableCell key={cell} className="align-middle">
+                              <Skeleton className="h-5 w-full max-w-28" />
                             </TableCell>
                           ),
                         )}
@@ -607,58 +647,84 @@ export function UsersTable() {
                   : data?.items.map((user) => (
                       <TableRow key={user.id}>
                         {canBulkSelect ? (
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedIds.includes(user.id)}
-                              disabled={user.id === me?.id}
-                              onCheckedChange={(checked) =>
-                                toggleUserSelection(user.id, checked === true)
-                              }
-                              aria-label={fullName(user)}
-                            />
+                          <TableCell className="px-2 text-center align-middle">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={selectedIds.includes(user.id)}
+                                disabled={user.id === me?.id}
+                                onCheckedChange={(checked) =>
+                                  toggleUserSelection(
+                                    user.id,
+                                    checked === true,
+                                  )
+                                }
+                                aria-label={fullName(user)}
+                              />
+                            </div>
                           </TableCell>
                         ) : null}
 
-                        <TableCell>
+                        <TableCell className="text-right align-middle">
                           <UserCell user={user} />
                         </TableCell>
 
-                        <TableCell>
-                          <span dir="ltr">{user.phone}</span>
+                        <TableCell className="text-right align-middle">
+                          <span dir="ltr" className="whitespace-nowrap text-sm">
+                            {user.userName}
+                          </span>
                         </TableCell>
 
-                        <TableCell>
+                        <TableCell className="text-right align-middle">
+                          <span dir="ltr" className="whitespace-nowrap text-sm">
+                            {user.nationalCode || "—"}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="text-right align-middle">
+                          <span dir="ltr" className="whitespace-nowrap text-sm">
+                            {user.phone}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="text-right align-middle">
                           <span dir="ltr" className="text-sm">
                             {user.email || "—"}
                           </span>
                         </TableCell>
 
-                        <TableCell>
+                        <TableCell className="text-right align-middle">
                           <RoleBadges roles={user.roles} />
                         </TableCell>
 
-                        <TableCell>
+                        <TableCell className="text-right align-middle">
+                          <UniversityBadges
+                            universities={user.universities}
+                          />
+                        </TableCell>
+
+                        <TableCell className="text-right align-middle">
                           <StatusBadge active={user.isActive} />
                         </TableCell>
 
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="text-right align-middle text-muted-foreground">
                           {formatLogin(user.lastLoginAt)}
                         </TableCell>
 
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="text-right align-middle text-muted-foreground">
                           {formatDate(user.createdAt)}
                         </TableCell>
 
-                        <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-  <UserMenuAccessAction user={user} />
-  <UserUniversityAccessAction user={user} />
+                        <TableCell className="text-center align-middle">
+                          <div className="flex items-center justify-center gap-1">
+                            <UserMenuAccessAction user={user} />
+                            <UserUniversityAccessAction user={user} />
 
-  <RowActions
+                            <RowActions
                               user={user}
                               dir={dir}
                               canDelete={
-                                deletePermission.allowed && user.id !== me?.id
+                                deletePermission.allowed &&
+                                user.id !== me?.id
                               }
                               canUpdate={updatePermission.allowed}
                               onEdit={() => {
@@ -673,6 +739,8 @@ export function UsersTable() {
               </TableBody>
             </Table>
           </div>
+
+
 
           {/* Mobile cards */}
           <ul
@@ -690,16 +758,22 @@ export function UsersTable() {
                   </li>
                 ))
               : data?.items.map((user) => (
-                  <li key={user.id} className="rounded-2xl border bg-card p-4">
+                  <li
+                    key={user.id}
+                    className="rounded-2xl border bg-card p-4"
+                  >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-start gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
                         {canBulkSelect ? (
                           <Checkbox
-                            className="mt-2"
+                            className="shrink-0"
                             checked={selectedIds.includes(user.id)}
                             disabled={user.id === me?.id}
                             onCheckedChange={(checked) =>
-                              toggleUserSelection(user.id, checked === true)
+                              toggleUserSelection(
+                                user.id,
+                                checked === true,
+                              )
                             }
                             aria-label={fullName(user)}
                           />
@@ -708,15 +782,16 @@ export function UsersTable() {
                         <UserCell user={user} />
                       </div>
 
-                 <div className="flex shrink-0 items-center gap-1">
-  <UserMenuAccessAction user={user} />
-  <UserUniversityAccessAction user={user} />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <UserMenuAccessAction user={user} />
+                        <UserUniversityAccessAction user={user} />
 
-  <RowActions
+                        <RowActions
                           user={user}
                           dir={dir}
                           canDelete={
-                            deletePermission.allowed && user.id !== me?.id
+                            deletePermission.allowed &&
+                            user.id !== me?.id
                           }
                           canUpdate={updatePermission.allowed}
                           onEdit={() => {
@@ -727,18 +802,78 @@ export function UsersTable() {
                       </div>
                     </div>
 
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {locale === "fa" ? "نام کاربری" : "Username"}
+                        </p>
+                        <p
+                          dir="ltr"
+                          className="mt-1 truncate text-sm font-medium text-start"
+                        >
+                          {user.userName}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {locale === "fa" ? "کد ملی" : "National Code"}
+                        </p>
+                        <p
+                          dir="ltr"
+                          className="mt-1 text-sm font-medium text-start"
+                        >
+                          {user.nationalCode || "—"}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {t("columns.phone")}
+                        </p>
+                        <p
+                          dir="ltr"
+                          className="mt-1 text-sm font-medium text-start"
+                        >
+                          {user.phone}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {t("columns.email")}
+                        </p>
+                        <p
+                          dir="ltr"
+                          className="mt-1 truncate text-sm font-medium text-start"
+                        >
+                          {user.email || "—"}
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <StatusBadge active={user.isActive} />
                       <RoleBadges roles={user.roles} />
+                      <UniversityBadges universities={user.universities} />
                     </div>
 
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      <span dir="ltr">{user.phone}</span> ·{" "}
-                      {t("columns.lastLogin")}: {formatLogin(user.lastLoginAt)}
-                    </p>
+                    <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span>
+                          {t("columns.lastLogin")}:{" "}
+                          {formatLogin(user.lastLoginAt)}
+                        </span>
+                        <span>
+                          {t("columns.createdAt")}:{" "}
+                          {formatDate(user.createdAt)}
+                        </span>
+                      </div>
+                    </div>
                   </li>
                 ))}
           </ul>
+
 
           {data && data.total > 0 ? (
             <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">

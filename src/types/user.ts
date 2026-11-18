@@ -1,10 +1,12 @@
-
 export type RoleInfo = {
   id: number;
   nameEn: string;
   nameFa: string;
 };
-
+export type UserUniversity = {
+  id: number;
+  title: string;
+};
 export type UserRecord = {
   id: string;
   userName: string;
@@ -24,6 +26,7 @@ export type UserRecord = {
   nationality: number | null;
 
   roles: RoleInfo[];
+  universities: UserUniversity[];
   isActive: boolean;
 
   createdAt: string;
@@ -33,11 +36,7 @@ export type UserRecord = {
 };
 
 /** فیلدهای مرتب‌سازی که API پشتیبانی می‌کند. */
-export type UserSort =
-  | "userName"
-  | "createdDate"
-  | "lastLoginDate"
-  | "email";
+export type UserSort = "userName" | "createdDate" | "lastLoginDate" | "email";
 
 export type UserQuery = {
   page: number;
