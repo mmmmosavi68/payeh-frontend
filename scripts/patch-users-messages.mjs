@@ -174,5 +174,5 @@ for (const [locale, users] of [
   const messages = JSON.parse(readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
   messages.users = users;
   writeFileSync(file, JSON.stringify(messages, null, 2) + "\n", "utf8");
-  console.log(`OK  messages/${locale}.json -> users`);
+  // console.log(`OK  messages/${locale}.json -> users`);
 }

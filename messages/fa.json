@@ -1,7 +1,8 @@
 {
   "common": {
-    "appName": "سامانه پایه",
-    "brandMark": "پ",
+    "appName": "سامانه جامع علوم پایه",
+    "brandMark": "پ ن",
+    "company":"پروژه نگار ایرانیان",
     "otherLanguage": "English",
     "switchLanguage": "تغییر زبان",
     "palette": "انتخاب پالت رنگ",
@@ -53,7 +54,7 @@
     "demoRole": "دسترسی کامل"
   },
   "footer": {
-    "rights": "© {year} {name}. تمامی حقوق محفوظ است."
+    "rights": "© {year} {name}. تمامی حقوق مادی و معنوی این محصول نزد <company>{companyName}</company> محفوظ است."
   },
   "auth": {
     "title": "خوش آمدید",

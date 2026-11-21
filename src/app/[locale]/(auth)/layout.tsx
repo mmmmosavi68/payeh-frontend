@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { Brand } from "@/components/layout/brand";
+import { Company } from "@/components/layout/company";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
@@ -54,7 +55,16 @@ export default async function AuthLayout({
       </main>
 
       <footer className="relative z-10 py-4 text-center text-xs text-muted-foreground">
-        {tf("rights", { year, name: t("appName") })}
+       {tf.rich("rights", {
+    year,
+    name: t("appName"),
+    companyName: t("company"),
+    company: (chunks) => (
+      <span className="text-red-500 font-semibold">
+        {chunks}
+      </span>
+    ),
+  })}
       </footer>
     </div>
   );

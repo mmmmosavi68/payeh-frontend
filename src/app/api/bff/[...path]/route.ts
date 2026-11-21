@@ -390,7 +390,7 @@ async function handleAuthed(request: NextRequest, rule: Rule, input: CallInput):
 }
 
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }): Promise<NextResponse> {
-  console.log("[BFF HIT]", request.method, request.url);
+  // console.log("[BFF HIT]", request.method, request.url);
 
   const { path: segments } = await context.params;
   const path = segments.join("/");
@@ -398,8 +398,8 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
 
   const rule = rules.find((r) => r.method === method && r.pattern.test(path));
 
-  console.log("[BFF PATH]", path);
-  console.log("[BFF RULE]", rule);
+  // console.log("[BFF PATH]", path);
+  // console.log("[BFF RULE]", rule);
 
   if (!rule) return fail(404, ApiStatus.NotFound, "Not found");
 
