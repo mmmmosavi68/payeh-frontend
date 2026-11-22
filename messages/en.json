@@ -1,7 +1,8 @@
 {
   "common": {
     "appName": "Payeh System",
-    "brandMark": "P",
+    "brandMark": "PN",
+"company": "Project Negar Iranian",
     "otherLanguage": "فارسی",
     "switchLanguage": "Switch language",
     "palette": "Color palette",
@@ -53,7 +54,7 @@
     "demoRole": "Full access"
   },
   "footer": {
-    "rights": "© {year} {name}. All rights reserved."
+"rights": "© {year} {name}. All rights reserved to <company>{companyName}</company>."
   },
   "auth": {
     "title": "Welcome",

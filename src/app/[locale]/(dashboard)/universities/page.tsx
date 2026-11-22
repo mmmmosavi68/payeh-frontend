@@ -60,7 +60,6 @@ export default function UniversitiesPage() {
     "university-parent-options",
     () => listUniversities({ isActive: true }),
   );
-
   const {
     data: codes,
     loading: codesLoading,

@@ -140,7 +140,7 @@ export function CodesTree({
           aria-hidden
         />
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">
               {item.title}
@@ -171,6 +171,18 @@ export function CodesTree({
         </div>
 
         <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-8"
+              title="افزودن آیتم"
+              aria-label={`افزودن آیتم به ${item.title}`}
+              onClick={() => onCreateItem(item)}
+            >
+              <Plus className="size-4" />
+            </Button>
+          
           <Button
             type="button"
             variant="ghost"
@@ -243,7 +255,7 @@ export function CodesTree({
             aria-hidden
           />
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="truncate text-sm font-semibold">
                 {group.title}

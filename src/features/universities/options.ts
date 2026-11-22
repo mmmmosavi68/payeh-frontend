@@ -7,10 +7,10 @@ export interface UniversityTypeOption {
 }
 
 export function getUniversityTypeOptions(codes: CodeDto[]): UniversityTypeOption[] {
-  const group = codes.find((code) => code.parentId === 29 && code.subCode === 0 && code.title?.trim() === "نوع دانشگاه" && code.isActive);
+  const group = codes.find((code) => code.primaryCode === 6 && code.subCode === 0 && code.title?.trim() === "نوع دانشگاه" && code.isActive);
 
   if (!group) {
-    console.log("University type group not found.", codes);
+    // console.log("University type group not found.", codes);
     return [];
   }
 
@@ -25,7 +25,7 @@ export function getUniversityTypeOptions(codes: CodeDto[]): UniversityTypeOption
 
 export async function listUniversityTypeOptions(): Promise<UniversityTypeOption[]> {
   const codes = await listCodes();
-  console.log("Codes received from API:", codes);
+  // console.log("Codes received from API:", codes);
 
   return getUniversityTypeOptions(codes);
 }

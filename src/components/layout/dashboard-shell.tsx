@@ -15,11 +15,13 @@ import {
 import { localeDirections } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
+
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
 import { useLogout } from "@/features/auth/use-logout";
 import { PermissionProvider } from "@/features/permissions/permission-provider";
 import { PaletteSwitcher } from "@/components/shared/palette-switcher";
+import { Link } from "@/i18n/navigation";
 
 type LogoutLinkProps = {
   collapsed?: boolean;
@@ -60,7 +62,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const year = format.number(new Date().getFullYear(), { useGrouping: false });
-
   return (
     <PermissionProvider>
     <div className="min-h-dvh bg-background">
@@ -155,9 +156,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex-1">{children}</div>
-        <footer className="mt-4 rounded-2xl border bg-card px-6 py-3 text-xs text-muted-foreground">
-          {tf("rights", { year, name: t("appName") })}
-        </footer>
+<footer className="mt-4 rounded-2xl border bg-card px-6 py-3 text-xs text-muted-foreground">
+  {tf.rich("rights", {
+    year,
+    name: t("appName"),
+    companyName: t("company"),
+    company: (chunks) => (
+      <span className="text-red-500 font-semibold">
+        {chunks}
+      </span>
+    ),
+  })}
+</footer>
       </main>
     </div>
     </PermissionProvider>

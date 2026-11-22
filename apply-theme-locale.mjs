@@ -26,7 +26,7 @@ function write(relativePath, content) {
   const fullPath = path.join(root, relativePath);
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content.replace(/^\n/, ''), 'utf8');
-  console.log(`Updated: ${relativePath}`);
+  // console.log(`Updated: ${relativePath}`);
 }
 
 function addMessages(file, values) {
@@ -35,7 +35,7 @@ function addMessages(file, values) {
   json.common ??= {};
   Object.assign(json.common, values);
   fs.writeFileSync(fullPath, `${JSON.stringify(json, null, 2)}\n`, 'utf8');
-  console.log(`Updated: ${file}`);
+  // console.log(`Updated: ${file}`);
 }
 
 write('src/i18n/routing.ts', `
@@ -410,9 +410,9 @@ if (!dashboard.includes('PaletteSwitcher')) {
     '<LocaleSwitcher />\n          <PaletteSwitcher />\n          <ThemeToggle />',
   );
   fs.writeFileSync(dashboardPath, dashboard, 'utf8');
-  console.log('Updated: src/components/layout/dashboard-shell.tsx');
+  // console.log('Updated: src/components/layout/dashboard-shell.tsx');
 } else {
-  console.log('Skipped: dashboard-shell already contains PaletteSwitcher');
+  // console.log('Skipped: dashboard-shell already contains PaletteSwitcher');
 }
 
 const layoutPath = path.join(root, 'src/app/[locale]/layout.tsx');
@@ -427,9 +427,9 @@ if (!layout.includes('ThemeSync')) {
     '<ThemeSync />\n            <PaletteInitializer />\n            <TooltipProvider>{children}</TooltipProvider>',
   );
   fs.writeFileSync(layoutPath, layout, 'utf8');
-  console.log('Updated: src/app/[locale]/layout.tsx');
+  // console.log('Updated: src/app/[locale]/layout.tsx');
 } else {
-  console.log('Skipped: locale layout already contains ThemeSync');
+  // console.log('Skipped: locale layout already contains ThemeSync');
 }
 
 const cssPath = path.join(root, 'src/app/globals.css');
@@ -534,9 +534,9 @@ if (!css.includes(cssMarker)) {
 }
 `;
   fs.writeFileSync(cssPath, css, 'utf8');
-  console.log('Updated: src/app/globals.css');
+  // console.log('Updated: src/app/globals.css');
 } else {
-  console.log('Skipped: Indigo palette already exists in globals.css');
+  // console.log('Skipped: Indigo palette already exists in globals.css');
 }
 
 addMessages('messages/fa.json', {
@@ -559,4 +559,4 @@ addMessages('messages/en.json', {
   paletteIndigo: 'Indigo',
 });
 
-console.log('\nانجام شد. حالا npm run typecheck و npm run lint را اجرا کن.');
+// console.log('\nانجام شد. حالا npm run typecheck و npm run lint را اجرا کن.');

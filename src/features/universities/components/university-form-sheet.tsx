@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -125,17 +124,12 @@ export function UniversityFormSheet({
   }
 
   const parentOptions = universities.filter(
-    (item) =>
-      item.isActive &&
-      item.id !== university?.id,
+    (item) => item.isActive && item.id !== university?.id,
   );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full gap-0 p-0 sm:max-w-xl"
-      >
+      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-xl">
         <SheetHeader className="border-b px-6 py-5 pe-14">
           <SheetTitle>
             {isEdit ? "ویرایش دانشگاه" : "ثبت دانشگاه جدید"}
@@ -192,8 +186,7 @@ export function UniversityFormSheet({
                   className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   disabled={universityTypes.length === 0}
                   {...register("universityTypeId", {
-                    setValueAs: (value) =>
-                      value === "" ? 0 : Number(value),
+                    setValueAs: (value) => (value === "" ? 0 : Number(value)),
                   })}
                 >
                   <option value={0}>انتخاب نوع دانشگاه</option>
@@ -248,8 +241,7 @@ export function UniversityFormSheet({
                   inputMode="numeric"
                   error={errors.capacityApproved?.message}
                   {...register("capacityApproved", {
-                    setValueAs: (value) =>
-                      value === "" ? 0 : Number(value),
+                    setValueAs: (value) => (value === "" ? 0 : Number(value)),
                   })}
                 />
               </div>
@@ -325,9 +317,7 @@ export function UniversityFormSheet({
                 className="rounded-full"
                 disabled={isSubmitting || universityTypes.length === 0}
               >
-                {isSubmitting && (
-                  <Loader2 className="size-4 animate-spin" />
-                )}
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
 
                 {isEdit ? "ذخیره تغییرات" : "ثبت دانشگاه"}
               </Button>

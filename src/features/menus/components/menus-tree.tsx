@@ -219,7 +219,7 @@ function MenuNode({
           aria-hidden
         />
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">
               {node.menuTitle}
@@ -242,18 +242,19 @@ function MenuNode({
                 غیرفعال
               </span>
             )}
-          </div>
+          
 
           {(node.controllerName || node.actionName) && (
             <p
               dir="ltr"
               className="mt-0.5 truncate text-xs text-muted-foreground"
             >
+             <span className="text-red-700">Path : </span>
               {[node.controllerName, node.actionName]
                 .filter(Boolean)
                 .join(" / ")}
             </p>
-          )}
+          )}</div>
         </div>
 
         <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
