@@ -185,6 +185,22 @@ const rules: Rule[] = [
     auth: true,
     session: "none",
   },
+
+  // دریافت ظرفیت دانشگاه‌های مهمان
+  {
+    method: "GET",
+    pattern: new RegExp(`^universityExamCapacities/universities/\\d+/exams/${GUID}/guest-capacities$`, "i"),
+    auth: true,
+    session: "none",
+  },
+
+  // ثبت یا ویرایش ظرفیت دانشگاه مهمان
+  {
+    method: "PUT",
+    pattern: new RegExp(`^universityExamCapacities/universities/\\d+/exams/${GUID}/guest-capacities/\\d+$`, "i"),
+    auth: true,
+    session: "none",
+  },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
