@@ -201,6 +201,56 @@ const rules: Rule[] = [
     auth: true,
     session: "none",
   },
+
+  // Student Registrations
+  {
+    method: "GET",
+    pattern: /^examRegistrations\/universities$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: /^examRegistrations\/exams$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: /^examRegistrations\/options$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: /^examRegistrations$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "POST",
+    pattern: /^examRegistrations$/i,
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "GET",
+    pattern: new RegExp(`^examRegistrations/${GUID}$`, "i"),
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "PUT",
+    pattern: new RegExp(`^examRegistrations/${GUID}$`, "i"),
+    auth: true,
+    session: "none",
+  },
+  {
+    method: "DELETE",
+    pattern: new RegExp(`^examRegistrations/${GUID}$`, "i"),
+    auth: true,
+    session: "none",
+  },
 ];
 
 function fail(httpStatus: number, statusCode: number, message: string) {
