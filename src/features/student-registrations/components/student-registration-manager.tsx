@@ -8,6 +8,8 @@ import {
   RefreshCw,
   Trash2,
   Users,
+  UserPlus,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +41,7 @@ import {
 } from "../api";
 
 import type { ExamRegistrationDto } from "../types";
+import { StudentRegistrationFormDialog } from "./student-registration-form-dialog";
 
 const fa = (value: number) => value.toLocaleString("fa-IR");
 
@@ -64,10 +67,15 @@ export function StudentRegistrationManager() {
   const [examId, setExamId] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRegistrationId, setEditingRegistrationId] =
+    useState<string | null>(null);
+
   const selectedUniversity = useMemo(
-    () => universities?.find(
-      (item) => String(item.universityId) === universityId,
-    ),
+    () =>
+      universities?.find(
+        (item) => String(item.universityId) === universityId,
+      ),
     [universities, universityId],
   );
 
@@ -127,6 +135,24 @@ export function StudentRegistrationManager() {
         ? listExamRegistrations(examId, Number(universityId))
         : Promise.resolve([]),
   );
+
+  function openCreateForm() {
+    setEditingRegistrationId(null);
+    setFormOpen(true);
+  }
+
+  function openEditForm(id: string) {
+    setEditingRegistrationId(id);
+    setFormOpen(true);
+  }
+
+  function handleFormOpenChange(open: boolean) {
+    setFormOpen(open);
+
+    if (!open) {
+      setEditingRegistrationId(null);
+    }
+  }
 
   async function handleDelete(item: ExamRegistrationDto) {
     const fullName = `${item.firstName} ${item.lastName}`;
@@ -318,7 +344,7 @@ export function StudentRegistrationManager() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {!registrationsLoading && registrations && (
                 <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                   {fa(registrations.length)} داوطلب
@@ -334,6 +360,15 @@ export function StudentRegistrationManager() {
               >
                 <RefreshCw className="size-3.5" />
                 بروزرسانی
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={openCreateForm}
+              >
+                <UserPlus className="me-2 size-4" />
+                ثبت‌نام جدید
               </Button>
             </div>
           </header>
@@ -363,10 +398,16 @@ export function StudentRegistrationManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-start">ردیف</TableHead>
-                  <TableHead className="text-start">نام و نام خانوادگی</TableHead>
+                  <TableHead className="text-start">
+                    نام و نام خانوادگی
+                  </TableHead>
                   <TableHead className="text-start">کد ملی</TableHead>
-                  <TableHead className="text-start">شماره دانشجویی</TableHead>
-                  <TableHead className="text-start">دانشگاه محل آزمون</TableHead>
+                  <TableHead className="text-start">
+                    شماره دانشجویی
+                  </TableHead>
+                  <TableHead className="text-start">
+                    دانشگاه محل آزمون
+                  </TableHead>
                   <TableHead className="text-start">تاریخ ثبت</TableHead>
                   <TableHead className="text-center">عملیات</TableHead>
                 </TableRow>
@@ -406,6 +447,16 @@ export function StudentRegistrationManager() {
                         <Button
                           type="button"
                           size="icon-sm"
+                          variant="outline"
+                          title="ویرایش اطلاعات"
+                          onClick={() => openEditForm(item.id)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+
+                        <Button
+                          type="button"
+                          size="icon-sm"
                           variant="destructive"
                           title="حذف ثبت‌نام"
                           disabled={deletingId === item.id}
@@ -421,6 +472,17 @@ export function StudentRegistrationManager() {
             </Table>
           )}
         </section>
+      )}
+
+      {selectedUniversity && selectedExam && (
+        <StudentRegistrationFormDialog
+          open={formOpen}
+          onOpenChange={handleFormOpenChange}
+          examId={selectedExam.examId}
+          universityId={selectedUniversity.universityId}
+          registrationId={editingRegistrationId}
+          onSaved={reloadRegistrations}
+        />
       )}
     </div>
   );

@@ -37,3 +37,30 @@ export interface ExamRegistrationDto {
   createdDate: string;
   customFieldValues: ExamRegistrationCustomFieldValueDto[];
 }
+
+export interface ExamRegistrationCapacityOptionDto {
+  universityExamCapacityId: string;
+  examVenueUniversityId: number;
+  examVenueUniversityTitle: string;
+  allocatedCapacity: number | null;
+  ownCapacity: number | null;
+  isOwnUniversity: boolean;
+  universityExamGuestCapacityId: string | null;
+  guestCapacity: number | null;
+}
+
+export interface ExamRegistrationCustomFieldDto {
+  id: string;
+  name: string;
+  label: string;
+  fieldTypeId: number;
+  isRequired: boolean;
+  optionsJson: string | null;
+  validationJson: string | null;
+  displayOrder: number;
+}
+
+export interface ExamRegistrationOptionsDto {
+  capacities: ExamRegistrationCapacityOptionDto[];
+  customFields: ExamRegistrationCustomFieldDto[];
+}

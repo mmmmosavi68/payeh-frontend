@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { apiRequest } from "@/lib/api/client";
 
-import type { RegistrationUniversityDto, RegistrationExamDto, ExamRegistrationDto } from "./types";
+import type { RegistrationUniversityDto, RegistrationExamDto, ExamRegistrationDto, ExamRegistrationOptionsDto } from "./types";
 
 /* ---------------------------------------------------------
    Input Types
@@ -79,6 +79,33 @@ const registrationSchema = z.object({
   customFieldValues: z.array(customFieldValueSchema),
 });
 
+const capacityOptionSchema = z.object({
+  universityExamCapacityId: z.string(),
+  examVenueUniversityId: z.number(),
+  examVenueUniversityTitle: z.string(),
+  allocatedCapacity: z.number().nullish(),
+  ownCapacity: z.number().nullish(),
+  isOwnUniversity: z.boolean(),
+  universityExamGuestCapacityId: z.string().nullish(),
+  guestCapacity: z.number().nullish(),
+});
+
+const customFieldSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  label: z.string(),
+  fieldTypeId: z.number(),
+  isRequired: z.boolean(),
+  optionsJson: z.string().nullish(),
+  validationJson: z.string().nullish(),
+  displayOrder: z.number(),
+});
+
+const registrationOptionsSchema = z.object({
+  capacities: z.array(capacityOptionSchema),
+  customFields: z.array(customFieldSchema),
+});
+
 /* ---------------------------------------------------------
    Normalizers
 --------------------------------------------------------- */
@@ -126,6 +153,33 @@ export async function listRegistrationExams(universityId: number): Promise<Regis
     query: { universityId },
     schema: z.array(examSchema),
   });
+}
+
+/* ---------------------------------------------------------
+   Registration Options
+--------------------------------------------------------- */
+
+/** دریافت ظرفیت‌های قابل انتخاب برای ثبت‌نام */
+export async function getExamRegistrationOptions(examId: string, universityId: number): Promise<ExamRegistrationOptionsDto> {
+  const result = await apiRequest("examRegistrations/options", {
+    query: { examId, universityId },
+    schema: registrationOptionsSchema,
+  });
+
+  return {
+    capacities: result.capacities.map((item) => ({
+      ...item,
+      allocatedCapacity: item.allocatedCapacity ?? null,
+      ownCapacity: item.ownCapacity ?? null,
+      universityExamGuestCapacityId: item.universityExamGuestCapacityId ?? null,
+      guestCapacity: item.guestCapacity ?? null,
+    })),
+    customFields: result.customFields.map((item) => ({
+      ...item,
+      optionsJson: item.optionsJson ?? null,
+      validationJson: item.validationJson ?? null,
+    })),
+  };
 }
 
 /* ---------------------------------------------------------
